@@ -1,0 +1,213 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  ADMIN
+  EXHIBITOR
+  VISITOR
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum EventStatus {
+  DRAFT
+  SCHEDULED
+  LIVE
+  ENDED
+}
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  name              String
+  phone             String?
+  role              UserRole  @default(VISITOR)
+  profilePicture    String?
+  password          String    // Hashed password
+
+  // Visitor data
+  shippingAddress   Json?     // Reutilizable
+
+  // Exhibitor data
+  booth             Booth?
+
+  orders            Order[]
+  messages          Message[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([email])
+}
+
+model Event {
+  id              String      @id @default(uuid())
+  name            String
+  slug            String      @unique
+  description     String      @db.Text
+  coverImage      String?
+  startDate       DateTime
+  endDate         DateTime
+  status          EventStatus @default(DRAFT)
+  isLive          Boolean     @default(false)
+
+  booths          Booth[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([slug])
+  @@index([startDate, endDate])
+  @@index([status])
+}
+
+model Booth {
+  id              String    @id @default(uuid())
+  name            String
+  description     String    @db.Text
+  logo            String?
+  coverPhoto      String?
+
+  // Payment info (Peru)
+  yapeNumber      String?
+  yapeQR          String?   // URL to QR image
+  plinNumber      String?
+  plinQR          String?   // URL to QR image
+
+  // Agora streaming
+  isStreaming     Boolean   @default(false)
+  streamStarted   DateTime?
+  agoraChannel    String?   // Channel name for Agora
+
+  // Relations
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id])
+  eventId         String
+  event           Event     @relation(fields: [eventId], references: [id])
+
+  products        Product[]
+  orders          Order[]
+  messages        Message[]
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([eventId])
+  @@index([userId])
+}
+
+model Product {
+  id              String    @id @default(uuid())
+  name            String
+  description     String    @db.Text
+  price           Decimal   @db.Decimal(10, 2)
+  stock           Int       @default(0)
+  images          String[]  // Array of image URLs
+  category        String?
+  isActive        Boolean   @default(true)
+
+  boothId         String
+  booth           Booth     @relation(fields: [boothId], references: [id], onDelete: Cascade)
+
+  orderItems      OrderItem[]
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([boothId])
+  @@index([category])
+  @@index([isActive])
+}
+
+model Order {
+  id              String      @id @default(uuid())
+  orderNumber     String      @unique // ORD-2025-XXXXX
+
+  // Customer info
+  userId          String
+  user            User        @relation(fields: [userId], references: [id])
+
+  // Booth info
+  boothId         String
+  booth           Booth       @relation(fields: [boothId], references: [id])
+
+  // Shipping info
+  shippingAddress Json        // { name, phone, address, city, district, reference }
+
+  // Order details
+  items           OrderItem[]
+  subtotal        Decimal     @db.Decimal(10, 2)
+  shipping        Decimal     @db.Decimal(10, 2) @default(0)
+  total           Decimal     @db.Decimal(10, 2)
+
+  // Payment info
+  paymentMethod   String      // 'yape' | 'plin' | 'other'
+  paymentProof    String?     // URL to uploaded payment screenshot
+
+  // Status
+  status          OrderStatus @default(PENDING)
+  notes           String?     @db.Text
+
+  // Timestamps
+  createdAt       DateTime    @default(now())
+  confirmedAt     DateTime?
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+
+  @@index([userId])
+  @@index([boothId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id          String    @id @default(uuid())
+
+  orderId     String
+  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id])
+
+  quantity    Int
+  unitPrice   Decimal   @db.Decimal(10, 2)
+  subtotal    Decimal   @db.Decimal(10, 2)
+
+  // Snapshot of product at time of order
+  productName String
+  productImage String?
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Message {
+  id          String    @id @default(uuid())
+
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+
+  boothId     String
+  booth       Booth     @relation(fields: [boothId], references: [id], onDelete: Cascade)
+
+  content     String    @db.Text
+  isDeleted   Boolean   @default(false)
+
+  createdAt   DateTime  @default(now())
+
+  @@index([boothId, createdAt])
+  @@index([userId])
+}
