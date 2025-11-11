@@ -1,5 +1,6 @@
-import JoiPkg from 'joi';
-const Joi = JoiPkg.default || JoiPkg;
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const Joi = require('joi');
 
 // Auth Validators
 export const registerSchema = Joi.object({

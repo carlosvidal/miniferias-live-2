@@ -1,5 +1,6 @@
-import jwtPkg from 'jsonwebtoken';
-const jwt = jwtPkg.default || jwtPkg;
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const jwt = require('jsonwebtoken');
 import dotenv from 'dotenv';
 import prisma from '../config/prisma.js';
 
