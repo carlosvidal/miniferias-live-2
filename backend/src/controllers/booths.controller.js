@@ -3,11 +3,33 @@ import { generateAgoraToken } from '../services/agora.service.js';
 
 export async function createBooth(req, res) {
   try {
-    const boothData = req.body;
+    const { exhibitorEmail, ...boothData } = req.body;
+
+    // Find user by email if provided
+    let userId = boothData.userId;
+    if (exhibitorEmail) {
+      const user = await prisma.user.findUnique({
+        where: { email: exhibitorEmail }
+      });
+
+      if (!user) {
+        return res.status(404).json({ error: 'Exhibitor not found with that email' });
+      }
+
+      if (user.role !== 'EXHIBITOR') {
+        return res.status(400).json({ error: 'User must have EXHIBITOR role' });
+      }
+
+      userId = user.id;
+    }
+
+    if (!userId) {
+      return res.status(400).json({ error: 'Either userId or exhibitorEmail is required' });
+    }
 
     // Check if user already has a booth
     const existingBooth = await prisma.booth.findUnique({
-      where: { userId: boothData.userId }
+      where: { userId }
     });
 
     if (existingBooth) {
@@ -24,7 +46,10 @@ export async function createBooth(req, res) {
     }
 
     const booth = await prisma.booth.create({
-      data: boothData,
+      data: {
+        ...boothData,
+        userId
+      },
       include: {
         user: {
           select: {
