@@ -34,13 +34,13 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
-            <span>{{ booth.exhibitor?.name || 'Sin asignar' }}</span>
+            <span>{{ booth.user?.name || 'Sin asignar' }}</span>
           </div>
           <div class="flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span>{{ booth.event?.title || 'Sin evento' }}</span>
+            <span>{{ booth.event?.name || 'Sin evento' }}</span>
           </div>
           <div v-if="booth._count?.products" class="flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,11 +52,11 @@
 
         <div class="flex items-center gap-2">
           <span
-            :class="booth.isLive ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'"
+            :class="booth.isStreaming ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'"
             class="px-2 py-1 text-xs font-medium rounded-full flex items-center gap-1"
           >
-            <span v-if="booth.isLive" class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
-            {{ booth.isLive ? 'En Vivo' : 'Offline' }}
+            <span v-if="booth.isStreaming" class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
+            {{ booth.isStreaming ? 'En Vivo' : 'Offline' }}
           </span>
         </div>
 
@@ -275,7 +275,7 @@ function editBooth(booth) {
     name: booth.name,
     description: booth.description,
     eventId: booth.eventId,
-    exhibitorEmail: booth.exhibitor?.email || '',
+    exhibitorEmail: booth.user?.email || '',
     bannerUrl: booth.bannerUrl || ''
   }
   showEditModal.value = true
