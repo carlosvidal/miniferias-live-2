@@ -26,16 +26,56 @@
           </div>
         </div>
 
-        <!-- Live Streaming Placeholder -->
-        <div v-if="booth.isStreaming" class="card bg-gradient-to-br from-purple-50 to-pink-50">
-          <div class="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg flex items-center justify-center text-white">
-            <div class="text-center">
-              <svg class="w-24 h-24 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-              <p class="text-xl font-semibold">Transmisión en Vivo</p>
-              <p class="text-sm text-gray-300 mt-2">La integración de streaming estará disponible próximamente</p>
+        <!-- Live Streaming + Chat Section -->
+        <div v-if="booth.isStreaming" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Live Stream -->
+          <div class="lg:col-span-2">
+            <div class="card">
+              <div id="video-container" class="aspect-video bg-gray-900 rounded-lg overflow-hidden relative">
+                <!-- Remote Stream (Exhibitor) -->
+                <div v-if="remoteUsers.length > 0" class="w-full h-full">
+                  <div
+                    v-for="user in remoteUsers"
+                    :key="user.uid"
+                    :id="`remote-player-${user.uid}`"
+                    class="w-full h-full"
+                  ></div>
+                </div>
+
+                <!-- Placeholder when not streaming yet -->
+                <div v-else class="w-full h-full flex items-center justify-center text-white">
+                  <div class="text-center">
+                    <div class="animate-pulse mb-4">
+                      <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <p class="text-lg font-medium">{{ streamStatus }}</p>
+                  </div>
+                </div>
+
+                <!-- Live Badge -->
+                <div class="absolute top-4 left-4 px-3 py-1 bg-red-600 text-white rounded-full text-sm font-medium flex items-center gap-2">
+                  <span class="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                  EN VIVO
+                </div>
+
+                <!-- Viewer Count -->
+                <div v-if="viewerCount > 0" class="absolute top-4 right-4 px-3 py-1 bg-black bg-opacity-50 text-white rounded-full text-sm flex items-center gap-2">
+                  👁️ {{ viewerCount }} {{ viewerCount === 1 ? 'espectador' : 'espectadores' }}
+                </div>
+              </div>
+
+              <!-- Stream Error -->
+              <div v-if="streamError" class="mt-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+                {{ streamError }}
+              </div>
             </div>
+          </div>
+
+          <!-- Chat -->
+          <div class="lg:col-span-1">
+            <BoothChat :booth-id="booth.id" />
           </div>
         </div>
 
@@ -45,8 +85,8 @@
 
           <div v-if="products.length" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div v-for="product in products" :key="product.id" class="card hover:shadow-lg transition-shadow">
-              <div v-if="product.imageUrl" class="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
-                <img :src="product.imageUrl" :alt="product.name" class="w-full h-full object-cover" />
+              <div v-if="product.images?.[0]" class="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
+                <img :src="product.images[0]" :alt="product.name" class="w-full h-full object-cover" />
               </div>
               <div v-else class="aspect-square bg-gradient-to-br from-purple-400 to-pink-400 rounded-lg flex items-center justify-center mb-4">
                 <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,13 +129,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useBoothsStore } from '@/stores/booths'
 import { useProductsStore } from '@/stores/products'
 import { useCartStore } from '@/stores/cart'
+import { useAgora } from '@/composables/useAgora'
 import AppHeader from '@/components/shared/AppHeader.vue'
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
+import BoothChat from '@/components/booths/BoothChat.vue'
+import api from '@/services/api'
 
 const route = useRoute()
 const boothsStore = useBoothsStore()
@@ -107,16 +150,85 @@ const error = ref(null)
 const booth = ref(null)
 const products = ref([])
 
+// Agora streaming
+const {
+  remoteUsers,
+  isJoined,
+  joinChannel,
+  leaveChannel
+} = useAgora()
+
+const streamStatus = ref('Conectando al stream...')
+const streamError = ref(null)
+const viewerCount = ref(0)
+
+// Load booth and products
 onMounted(async () => {
   try {
     const boothId = route.params.id
     booth.value = await boothsStore.fetchBoothById(boothId)
     const response = await productsStore.fetchProductsByBooth(boothId)
     products.value = response.products
+
+    // If booth is streaming, join the stream
+    if (booth.value.isStreaming) {
+      await initStream()
+    }
   } catch (err) {
     error.value = err.response?.data?.error || 'Error al cargar el booth'
   } finally {
     loading.value = false
+  }
+})
+
+// Initialize Agora stream
+async function initStream() {
+  try {
+    streamStatus.value = 'Obteniendo acceso al stream...'
+
+    // Get stream token from backend
+    const response = await api.get(`/booths/${booth.value.id}/stream/token`)
+    const { appId, channel, token, uid } = response.data
+
+    streamStatus.value = 'Conectando al canal...'
+
+    // Join as audience
+    await joinChannel(appId, channel, token, uid, 'audience')
+
+    streamStatus.value = 'Esperando transmisión...'
+
+    // Update viewer count (mock for now, would need real implementation)
+    viewerCount.value = Math.floor(Math.random() * 50) + 10
+  } catch (err) {
+    console.error('Stream init error:', err)
+    streamError.value = err.response?.data?.error || 'Error al conectar con el stream'
+    streamStatus.value = 'Error al conectar'
+  }
+}
+
+// Watch for remote users and play their video
+watch(remoteUsers, async (users) => {
+  if (users.length > 0) {
+    streamStatus.value = 'Stream activo'
+    await nextTick()
+
+    users.forEach(user => {
+      if (user.videoTrack) {
+        const playerElement = document.getElementById(`remote-player-${user.uid}`)
+        if (playerElement) {
+          user.videoTrack.play(playerElement)
+        }
+      }
+    })
+  } else {
+    streamStatus.value = 'Esperando transmisión...'
+  }
+}, { deep: true })
+
+// Cleanup on unmount
+onUnmounted(async () => {
+  if (isJoined.value) {
+    await leaveChannel()
   }
 })
 
@@ -132,7 +244,7 @@ function addToCart(product) {
     productId: product.id,
     name: product.name,
     price: product.price,
-    imageUrl: product.imageUrl,
+    imageUrl: product.images?.[0] || '',
     boothId: booth.value.id,
     boothName: booth.value.name,
     quantity: 1
