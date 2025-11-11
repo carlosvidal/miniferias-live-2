@@ -295,9 +295,15 @@ async function handleSubmit() {
       name: form.value.name,
       description: form.value.description,
       eventId: form.value.eventId,
-      exhibitorEmail: form.value.exhibitorEmail,
-      bannerUrl: form.value.bannerUrl || null
+      exhibitorEmail: form.value.exhibitorEmail
     }
+
+    // Solo agregar bannerUrl si tiene valor
+    if (form.value.bannerUrl && form.value.bannerUrl.trim()) {
+      data.bannerUrl = form.value.bannerUrl
+    }
+
+    console.log('Enviando datos del booth:', data) // Debug
 
     if (showEditModal.value) {
       await boothsStore.updateBooth(editingBooth.value.id, data)
@@ -307,7 +313,14 @@ async function handleSubmit() {
 
     closeModal()
   } catch (error) {
-    errorMessage.value = error.response?.data?.error || 'Error al guardar el booth'
+    console.error('Error completo:', error.response?.data) // Debug
+    if (error.response?.data?.details) {
+      // Mostrar errores de validación específicos
+      const errorMessages = error.response.data.details.map(d => `${d.field}: ${d.message}`).join(', ')
+      errorMessage.value = errorMessages
+    } else {
+      errorMessage.value = error.response?.data?.error || 'Error al guardar el booth'
+    }
   } finally {
     submitting.value = false
   }
