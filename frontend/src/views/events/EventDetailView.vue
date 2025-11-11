@@ -67,8 +67,8 @@
               <!-- Cover Photo -->
               <div class="relative mb-4">
                 <img
-                  v-if="booth.coverPhoto"
-                  :src="booth.coverPhoto"
+                  v-if="booth.bannerUrl || booth.coverPhoto"
+                  :src="booth.bannerUrl || booth.coverPhoto"
                   :alt="booth.name"
                   class="w-full h-48 object-cover rounded-lg"
                 />
