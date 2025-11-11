@@ -31,6 +31,12 @@ enum EventStatus {
   ENDED
 }
 
+enum BoothRole {
+  OWNER
+  OPERATOR
+  MODERATOR
+}
+
 model User {
   id                String    @id @default(uuid())
   email             String    @unique
@@ -43,8 +49,8 @@ model User {
   // Visitor data
   shippingAddress   Json?     // Reutilizable
 
-  // Exhibitor data
-  booth             Booth?
+  // Many-to-Many with Booth (can be member of multiple booths)
+  boothMemberships  BoothMember[]
 
   orders            Order[]
   messages          Message[]
@@ -93,10 +99,11 @@ model Booth {
   agoraChannel    String?   // Channel name for Agora
 
   // Relations
-  userId          String    @unique
-  user            User      @relation(fields: [userId], references: [id])
   eventId         String
   event           Event     @relation(fields: [eventId], references: [id])
+
+  // Many-to-Many with User (multiple members can manage the booth)
+  members         BoothMember[]
 
   products        Product[]
   orders          Order[]
@@ -106,7 +113,6 @@ model Booth {
   updatedAt       DateTime  @updatedAt
 
   @@index([eventId])
-  @@index([userId])
 }
 
 model Product {
@@ -209,5 +215,24 @@ model Message {
   createdAt   DateTime  @default(now())
 
   @@index([boothId, createdAt])
+  @@index([userId])
+}
+
+model BoothMember {
+  id        String     @id @default(uuid())
+
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  boothId   String
+  booth     Booth      @relation(fields: [boothId], references: [id], onDelete: Cascade)
+
+  role      BoothRole  @default(OPERATOR)
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@unique([userId, boothId]) // A user can only have one role per booth
+  @@index([boothId])
   @@index([userId])
 }

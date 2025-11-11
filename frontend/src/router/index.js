@@ -73,6 +73,11 @@ const router = createRouter({
           path: 'booths',
           name: 'admin-booths',
           component: () => import('@/views/admin/BoothsView.vue')
+        },
+        {
+          path: 'users',
+          name: 'admin-users',
+          component: () => import('@/views/admin/UsersView.vue')
         }
       ]
     },
