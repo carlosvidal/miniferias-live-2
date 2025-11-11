@@ -20,8 +20,8 @@
     <!-- Products Grid -->
     <div v-else-if="products.length" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div v-for="product in products" :key="product.id" class="card hover:shadow-lg transition-shadow">
-        <div v-if="product.imageUrl" class="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
-          <img :src="product.imageUrl" :alt="product.name" class="w-full h-full object-cover" />
+        <div v-if="product.images?.[0]" class="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
+          <img :src="product.images[0]" :alt="product.name" class="w-full h-full object-cover" />
         </div>
         <div v-else class="aspect-square bg-gradient-to-br from-purple-400 to-pink-400 rounded-lg flex items-center justify-center mb-4">
           <svg class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -250,7 +250,7 @@ function editProduct(product) {
     description: product.description,
     price: product.price,
     stock: product.stock,
-    imageUrl: product.imageUrl || ''
+    imageUrl: product.images?.[0] || ''
   }
   showEditModal.value = true
 }
@@ -270,7 +270,7 @@ async function handleSubmit() {
       description: form.value.description,
       price: parseFloat(form.value.price),
       stock: parseInt(form.value.stock),
-      imageUrl: form.value.imageUrl || null,
+      images: form.value.imageUrl ? [form.value.imageUrl] : ['https://placehold.co/400x400/e5e5e5/666?text=No+Image'],
       boothId: myBooth.value.id
     }
 
