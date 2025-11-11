@@ -1,5 +1,7 @@
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import bcryptPkg from 'bcrypt';
+const bcrypt = bcryptPkg.default || bcryptPkg;
+import jwtPkg from 'jsonwebtoken';
+const jwt = jwtPkg.default || jwtPkg;
 import prisma from '../config/prisma.js';
 import dotenv from 'dotenv';
 

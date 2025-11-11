@@ -1,4 +1,5 @@
-import Joi from 'joi';
+import JoiPkg from 'joi';
+const Joi = JoiPkg.default || JoiPkg;
 
 // Auth Validators
 export const registerSchema = Joi.object({

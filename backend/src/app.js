@@ -1,7 +1,10 @@
 import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
+import corsPkg from 'cors';
+const cors = corsPkg.default || corsPkg;
+import helmetPkg from 'helmet';
+const helmet = helmetPkg.default || helmetPkg;
+import rateLimitPkg from 'express-rate-limit';
+const rateLimit = rateLimitPkg.default || rateLimitPkg;
 import dotenv from 'dotenv';
 
 // Import routes
