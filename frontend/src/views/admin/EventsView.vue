@@ -22,7 +22,7 @@
         <div class="flex items-start justify-between">
           <div class="flex-1">
             <div class="flex items-center gap-3 mb-2">
-              <h3 class="text-xl font-semibold">{{ event.title }}</h3>
+              <h3 class="text-xl font-semibold">{{ event.name }}</h3>
               <span
                 :class="getStatusBadgeClass(event.status)"
                 class="px-2 py-1 text-xs font-medium rounded-full"
@@ -217,7 +217,7 @@
       <div class="bg-white rounded-lg max-w-md w-full p-6">
         <h3 class="text-xl font-bold mb-4">Confirmar Eliminación</h3>
         <p class="text-gray-600 mb-6">
-          ¿Estás seguro de eliminar el evento <strong>{{ eventToDelete?.title }}</strong>?
+          ¿Estás seguro de eliminar el evento <strong>{{ eventToDelete?.name }}</strong>?
           Esta acción no se puede deshacer.
         </p>
         <div class="flex gap-3">
@@ -310,11 +310,11 @@ function formatTime(dateString) {
 function editEvent(event) {
   editingEvent.value = event
   form.value = {
-    title: event.title,
+    title: event.name,
     description: event.description,
     startDate: new Date(event.startDate).toISOString().slice(0, 16),
     endDate: new Date(event.endDate).toISOString().slice(0, 16),
-    bannerUrl: event.bannerUrl || '',
+    bannerUrl: event.coverImage || '',
     status: event.status
   }
   showEditModal.value = true
@@ -331,11 +331,11 @@ async function handleSubmit() {
 
   try {
     const data = {
-      title: form.value.title,
+      name: form.value.title,
       description: form.value.description,
       startDate: new Date(form.value.startDate).toISOString(),
       endDate: new Date(form.value.endDate).toISOString(),
-      bannerUrl: form.value.bannerUrl || null,
+      coverImage: form.value.bannerUrl || null,
       status: form.value.status
     }
 
