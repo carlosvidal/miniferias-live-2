@@ -195,7 +195,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { adminAPI } from '@/services/api'
-import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
 
 const loading = ref(true)
 const error = ref(null)

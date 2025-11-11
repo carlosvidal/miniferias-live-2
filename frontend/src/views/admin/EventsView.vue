@@ -244,7 +244,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useEventsStore } from '@/stores/events'
-import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
 
 const eventsStore = useEventsStore()
 

@@ -69,7 +69,7 @@
 import { ref, onMounted } from 'vue'
 import { useOrdersStore } from '@/stores/orders'
 import { useBoothsStore } from '@/stores/booths'
-import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
 
 const ordersStore = useOrdersStore()
 const boothsStore = useBoothsStore()
