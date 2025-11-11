@@ -140,7 +140,7 @@
               <select v-model="form.eventId" required class="input">
                 <option value="">Selecciona un evento</option>
                 <option v-for="event in eventsStore.events" :key="event.id" :value="event.id">
-                  {{ event.title }}
+                  {{ event.name }}
                 </option>
               </select>
             </div>
