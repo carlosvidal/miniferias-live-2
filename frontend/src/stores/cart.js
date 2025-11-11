@@ -23,21 +23,21 @@ export const useCartStore = defineStore('cart', () => {
   function addItem(product, quantity = 1) {
     // Check if cart is for same booth
     if (boothId.value && boothId.value !== product.boothId) {
-      throw new Error('Cannot add products from different booths')
+      throw new Error('No puedes agregar productos de diferentes booths')
     }
 
     boothId.value = product.boothId
 
-    const existingItem = items.value.find(item => item.id === product.id)
+    const existingItem = items.value.find(item => item.id === product.productId || item.id === product.id)
 
     if (existingItem) {
       existingItem.quantity += quantity
     } else {
       items.value.push({
-        id: product.id,
+        id: product.productId || product.id,
         name: product.name,
         price: product.price,
-        image: product.images[0],
+        image: product.imageUrl || product.images?.[0] || product.image || '',
         quantity,
         boothId: product.boothId
       })
