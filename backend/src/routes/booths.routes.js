@@ -8,7 +8,10 @@ import {
   getMyBooth,
   startStreaming,
   stopStreaming,
-  getStreamToken
+  getStreamToken,
+  addBoothMember,
+  removeBoothMember,
+  updateBoothMemberRole
 } from '../controllers/booths.controller.js';
 import { authenticate, optionalAuth } from '../middleware/auth.middleware.js';
 import { requireAdmin, requireExhibitor } from '../middleware/role.middleware.js';
@@ -27,6 +30,11 @@ router.get('/me/booth', authenticate, requireExhibitor, getMyBooth);
 router.put('/:id', authenticate, validate(updateBoothSchema), updateBooth);
 router.post('/:id/stream/start', authenticate, startStreaming);
 router.post('/:id/stream/stop', authenticate, stopStreaming);
+
+// Booth members management (OWNER or ADMIN)
+router.post('/:id/members', authenticate, addBoothMember);
+router.delete('/:id/members/:memberId', authenticate, removeBoothMember);
+router.patch('/:id/members/:memberId', authenticate, updateBoothMemberRole);
 
 // Admin only routes
 router.post('/', authenticate, requireAdmin, validate(createBoothSchema), createBooth);

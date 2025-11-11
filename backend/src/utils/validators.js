@@ -57,6 +57,7 @@ export const updateBoothSchema = Joi.object({
   description: Joi.string().min(10).optional(),
   logo: Joi.string().uri().optional(),
   coverPhoto: Joi.string().uri().optional(),
+  bannerUrl: Joi.string().uri().optional(),
   yapeNumber: Joi.string().pattern(/^9\d{8}$/).optional(),
   yapeQR: Joi.string().uri().optional(),
   plinNumber: Joi.string().pattern(/^9\d{8}$/).optional(),

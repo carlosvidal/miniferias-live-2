@@ -86,6 +86,7 @@ model Booth {
   description     String    @db.Text
   logo            String?
   coverPhoto      String?
+  bannerUrl       String?
 
   // Payment info (Peru)
   yapeNumber      String?
