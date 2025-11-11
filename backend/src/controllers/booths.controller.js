@@ -27,15 +27,6 @@ export async function createBooth(req, res) {
       return res.status(400).json({ error: 'Either userId or exhibitorEmail is required' });
     }
 
-    // Check if user already has a booth
-    const existingBooth = await prisma.booth.findUnique({
-      where: { userId }
-    });
-
-    if (existingBooth) {
-      return res.status(400).json({ error: 'User already has a booth' });
-    }
-
     // Verify event exists
     const event = await prisma.event.findUnique({
       where: { id: boothData.eventId }
@@ -45,17 +36,30 @@ export async function createBooth(req, res) {
       return res.status(404).json({ error: 'Event not found' });
     }
 
+    // Remove userId from boothData (no longer part of Booth model)
+    delete boothData.userId;
+
+    // Create booth with owner as member (Many-to-Many)
     const booth = await prisma.booth.create({
       data: {
         ...boothData,
-        userId
+        members: {
+          create: {
+            userId: userId,
+            role: 'OWNER'
+          }
+        }
       },
       include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true
+              }
+            }
           }
         },
         event: {
@@ -89,11 +93,15 @@ export async function getBooths(req, res) {
     const booths = await prisma.booth.findMany({
       where,
       include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true
+              }
+            }
           }
         },
         event: {
@@ -127,12 +135,16 @@ export async function getBoothById(req, res) {
     const booth = await prisma.booth.findUnique({
       where: { id },
       include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            profilePicture: true
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                profilePicture: true
+              }
+            }
           }
         },
         event: {
@@ -168,14 +180,24 @@ export async function updateBooth(req, res) {
 
     // Verify booth exists and user has permission
     const existingBooth = await prisma.booth.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        members: {
+          where: { userId: req.user.id }
+        }
+      }
     });
 
     if (!existingBooth) {
       return res.status(404).json({ error: 'Booth not found' });
     }
 
-    if (req.user.role !== 'ADMIN' && existingBooth.userId !== req.user.id) {
+    // Check if user is a member with OWNER or OPERATOR role
+    const membership = existingBooth.members[0];
+    const canUpdate = req.user.role === 'ADMIN' ||
+                      (membership && (membership.role === 'OWNER' || membership.role === 'OPERATOR'));
+
+    if (!canUpdate) {
       return res.status(403).json({ error: 'Not authorized to update this booth' });
     }
 
@@ -214,9 +236,27 @@ export async function deleteBooth(req, res) {
 
 export async function getMyBooth(req, res) {
   try {
-    const booth = await prisma.booth.findUnique({
-      where: { userId: req.user.id },
+    // Find booths where user is a member
+    const booths = await prisma.booth.findMany({
+      where: {
+        members: {
+          some: {
+            userId: req.user.id
+          }
+        }
+      },
       include: {
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true
+              }
+            }
+          }
+        },
         event: {
           select: {
             id: true,
@@ -239,9 +279,13 @@ export async function getMyBooth(req, res) {
       }
     });
 
-    if (!booth) {
+    if (booths.length === 0) {
       return res.status(404).json({ error: 'You do not have a booth yet' });
     }
+
+    // For backwards compatibility, return first booth if only one exists
+    // In the future, we can return all booths
+    const booth = booths[0];
 
     res.json(booth);
   } catch (error) {
@@ -255,14 +299,24 @@ export async function startStreaming(req, res) {
     const { id } = req.params;
 
     const booth = await prisma.booth.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        members: {
+          where: { userId: req.user.id }
+        }
+      }
     });
 
     if (!booth) {
       return res.status(404).json({ error: 'Booth not found' });
     }
 
-    if (req.user.role !== 'ADMIN' && booth.userId !== req.user.id) {
+    // Check if user is a member with OWNER or OPERATOR role
+    const membership = booth.members[0];
+    const canStartStreaming = req.user.role === 'ADMIN' ||
+                               (membership && (membership.role === 'OWNER' || membership.role === 'OPERATOR'));
+
+    if (!canStartStreaming) {
       return res.status(403).json({ error: 'Not authorized' });
     }
 
@@ -298,14 +352,24 @@ export async function stopStreaming(req, res) {
     const { id } = req.params;
 
     const booth = await prisma.booth.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        members: {
+          where: { userId: req.user.id }
+        }
+      }
     });
 
     if (!booth) {
       return res.status(404).json({ error: 'Booth not found' });
     }
 
-    if (req.user.role !== 'ADMIN' && booth.userId !== req.user.id) {
+    // Check if user is a member with OWNER or OPERATOR role
+    const membership = booth.members[0];
+    const canStopStreaming = req.user.role === 'ADMIN' ||
+                              (membership && (membership.role === 'OWNER' || membership.role === 'OPERATOR'));
+
+    if (!canStopStreaming) {
       return res.status(403).json({ error: 'Not authorized' });
     }
 
@@ -332,7 +396,12 @@ export async function getStreamToken(req, res) {
     const { id } = req.params;
 
     const booth = await prisma.booth.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        members: req.user ? {
+          where: { userId: req.user.id }
+        } : false
+      }
     });
 
     if (!booth) {
@@ -343,8 +412,16 @@ export async function getStreamToken(req, res) {
       return res.status(400).json({ error: 'Booth is not currently streaming' });
     }
 
-    // Generate Agora token for viewer (audience)
-    const role = (req.user && booth.userId === req.user.id) ? 'host' : 'audience';
+    // Determine role based on membership
+    let role = 'audience';
+    if (req.user && booth.members && booth.members.length > 0) {
+      const membership = booth.members[0];
+      // OWNER and OPERATOR can be host, MODERATOR is audience with special privileges
+      if (membership.role === 'OWNER' || membership.role === 'OPERATOR') {
+        role = 'host';
+      }
+    }
+
     const uid = req.user
       ? parseInt(req.user.id.replace(/-/g, '').substring(0, 10), 16)
       : Math.floor(Math.random() * 100000);
