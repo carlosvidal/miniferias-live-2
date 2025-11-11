@@ -6,15 +6,24 @@ export async function createProduct(req, res) {
 
     // Verify booth exists
     const booth = await prisma.booth.findUnique({
-      where: { id: productData.boothId }
+      where: { id: productData.boothId },
+      include: {
+        members: {
+          where: { userId: req.user.id }
+        }
+      }
     });
 
     if (!booth) {
       return res.status(404).json({ error: 'Booth not found' });
     }
 
-    // Verify user owns the booth or is admin
-    if (req.user.role !== 'ADMIN' && booth.userId !== req.user.id) {
+    // Verify user is a booth member (OWNER/OPERATOR) or is admin
+    const membership = booth.members[0];
+    const canCreate = req.user.role === 'ADMIN' ||
+                      (membership && (membership.role === 'OWNER' || membership.role === 'OPERATOR'));
+
+    if (!canCreate) {
       return res.status(403).json({ error: 'Not authorized to add products to this booth' });
     }
 
@@ -108,15 +117,27 @@ export async function updateProduct(req, res) {
     // Verify product exists
     const existingProduct = await prisma.product.findUnique({
       where: { id },
-      include: { booth: true }
+      include: {
+        booth: {
+          include: {
+            members: {
+              where: { userId: req.user.id }
+            }
+          }
+        }
+      }
     });
 
     if (!existingProduct) {
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    // Verify user owns the booth or is admin
-    if (req.user.role !== 'ADMIN' && existingProduct.booth.userId !== req.user.id) {
+    // Verify user is a booth member (OWNER/OPERATOR) or is admin
+    const membership = existingProduct.booth.members[0];
+    const canUpdate = req.user.role === 'ADMIN' ||
+                      (membership && (membership.role === 'OWNER' || membership.role === 'OPERATOR'));
+
+    if (!canUpdate) {
       return res.status(403).json({ error: 'Not authorized to update this product' });
     }
 
@@ -142,15 +163,27 @@ export async function deleteProduct(req, res) {
     // Verify product exists
     const existingProduct = await prisma.product.findUnique({
       where: { id },
-      include: { booth: true }
+      include: {
+        booth: {
+          include: {
+            members: {
+              where: { userId: req.user.id }
+            }
+          }
+        }
+      }
     });
 
     if (!existingProduct) {
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    // Verify user owns the booth or is admin
-    if (req.user.role !== 'ADMIN' && existingProduct.booth.userId !== req.user.id) {
+    // Verify user is a booth member (OWNER/OPERATOR) or is admin
+    const membership = existingProduct.booth.members[0];
+    const canDelete = req.user.role === 'ADMIN' ||
+                      (membership && (membership.role === 'OWNER' || membership.role === 'OPERATOR'));
+
+    if (!canDelete) {
       return res.status(403).json({ error: 'Not authorized to delete this product' });
     }
 
