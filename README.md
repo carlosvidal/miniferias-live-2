@@ -89,6 +89,26 @@ miniferias-live-2/
 - Cuenta de Agora (para live streaming)
 - Cuenta de SendGrid (opcional, para emails)
 
+### 🗄️ Setup de Base de Datos (IMPORTANTE)
+
+**Para configuración automática:**
+```bash
+cd backend
+./setup-db.sh  # macOS/Linux
+# o
+setup-db.bat   # Windows
+```
+
+**Para configuración manual, ver:** [DATABASE_SETUP.md](./DATABASE_SETUP.md)
+
+**Guía rápida:**
+1. Crear proyecto en Supabase
+2. Copiar credenciales al `.env`
+3. Ejecutar `npm run prisma:push`
+4. Ejecutar `npm run prisma:seed`
+
+Ver [DATABASE_SETUP.md](./DATABASE_SETUP.md) para troubleshooting.
+
 ### 1. Setup Backend
 
 ```bash

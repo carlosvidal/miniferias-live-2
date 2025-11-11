@@ -1,4 +1,5 @@
-import { RtcTokenBuilder, RtcRole } from 'agora-access-token';
+import pkg from 'agora-access-token';
+const { RtcTokenBuilder, RtcRole } = pkg;
 import dotenv from 'dotenv';
 
 dotenv.config();
