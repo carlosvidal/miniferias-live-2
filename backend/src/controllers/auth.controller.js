@@ -115,11 +115,15 @@ export async function getMe(req, res) {
         profilePicture: true,
         shippingAddress: true,
         createdAt: true,
-        booth: {
-          select: {
-            id: true,
-            name: true,
-            eventId: true
+        boothMemberships: {
+          include: {
+            booth: {
+              select: {
+                id: true,
+                name: true,
+                eventId: true
+              }
+            }
           }
         }
       }
