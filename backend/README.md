@@ -47,6 +47,16 @@ Or push schema directly (development):
 npm run prisma:push
 ```
 
+5. (Optional) Seed database with test users:
+```bash
+npm run prisma:seed
+```
+
+This will create 3 test users:
+- **Admin**: admin@miniferias.pe / admin123
+- **Exhibitor**: expositor@miniferias.pe / exhibitor123
+- **Visitor**: visitante@miniferias.pe / visitor123
+
 ## Development
 
 Start the development server:
