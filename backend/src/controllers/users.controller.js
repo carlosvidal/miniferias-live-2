@@ -1,5 +1,5 @@
 import prisma from '../config/prisma.js';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 
 export async function getUsers(req, res) {
   try {
@@ -29,7 +29,7 @@ export async function getUsers(req, res) {
         createdAt: true,
         _count: {
           select: {
-            booths: true,
+            boothMemberships: true,
             orders: true
           }
         }
@@ -146,7 +146,7 @@ export async function deleteUser(req, res) {
     const existingUser = await prisma.user.findUnique({
       where: { id },
       include: {
-        booths: true,
+        boothMemberships: true,
         orders: true
       }
     });
@@ -160,10 +160,10 @@ export async function deleteUser(req, res) {
       return res.status(400).json({ error: 'Cannot delete your own account' });
     }
 
-    // Check if user has booths
-    if (existingUser.booths.length > 0) {
+    // Check if user has booth memberships
+    if (existingUser.boothMemberships.length > 0) {
       return res.status(400).json({
-        error: 'Cannot delete user with active booths. Please delete or reassign booths first.'
+        error: 'Cannot delete user with active booth memberships. Please remove user from booths first.'
       });
     }
 
