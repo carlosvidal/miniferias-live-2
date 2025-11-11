@@ -96,3 +96,8 @@ export const messagesAPI = {
   create: (data) => api.post('/messages', data),
   delete: (id) => api.delete(`/messages/${id}`)
 }
+
+// Admin API
+export const adminAPI = {
+  getStats: () => api.get('/admin/stats')
+}
