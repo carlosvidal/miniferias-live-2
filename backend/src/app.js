@@ -1,10 +1,9 @@
 import express from 'express';
-import corsPkg from 'cors';
-const cors = corsPkg.default || corsPkg;
-import helmetPkg from 'helmet';
-const helmet = helmetPkg.default || helmetPkg;
-import rateLimitPkg from 'express-rate-limit';
-const rateLimit = rateLimitPkg.default || rateLimitPkg;
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 import dotenv from 'dotenv';
 
 // Import routes
