@@ -335,8 +335,12 @@ async function handleSubmit() {
       description: form.value.description,
       startDate: new Date(form.value.startDate).toISOString(),
       endDate: new Date(form.value.endDate).toISOString(),
-      coverImage: form.value.bannerUrl || null,
       status: form.value.status
+    }
+
+    // Solo agregar coverImage si tiene valor
+    if (form.value.bannerUrl && form.value.bannerUrl.trim()) {
+      data.coverImage = form.value.bannerUrl
     }
 
     console.log('Enviando datos:', data) // Debug
