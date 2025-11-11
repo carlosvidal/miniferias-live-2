@@ -42,13 +42,15 @@ export const createBoothSchema = Joi.object({
   description: Joi.string().min(10).required(),
   logo: Joi.string().uri().optional(),
   coverPhoto: Joi.string().uri().optional(),
+  bannerUrl: Joi.string().uri().optional(),
   yapeNumber: Joi.string().pattern(/^9\d{8}$/).optional(),
   yapeQR: Joi.string().uri().optional(),
   plinNumber: Joi.string().pattern(/^9\d{8}$/).optional(),
   plinQR: Joi.string().uri().optional(),
-  userId: Joi.string().uuid().required(),
+  userId: Joi.string().uuid().optional(),
+  exhibitorEmail: Joi.string().email().optional(),
   eventId: Joi.string().uuid().required()
-});
+}).or('userId', 'exhibitorEmail');
 
 export const updateBoothSchema = Joi.object({
   name: Joi.string().min(3).optional(),
