@@ -339,6 +339,8 @@ async function handleSubmit() {
       status: form.value.status
     }
 
+    console.log('Enviando datos:', data) // Debug
+
     if (showEditModal.value) {
       await eventsStore.updateEvent(editingEvent.value.id, data)
     } else {
@@ -347,7 +349,14 @@ async function handleSubmit() {
 
     closeModal()
   } catch (error) {
-    errorMessage.value = error.response?.data?.error || 'Error al guardar el evento'
+    console.error('Error completo:', error.response?.data) // Debug
+    if (error.response?.data?.details) {
+      // Mostrar errores de validación específicos
+      const errorMessages = error.response.data.details.map(d => `${d.field}: ${d.message}`).join(', ')
+      errorMessage.value = errorMessages
+    } else {
+      errorMessage.value = error.response?.data?.error || 'Error al guardar el evento'
+    }
   } finally {
     submitting.value = false
   }
