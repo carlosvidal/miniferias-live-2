@@ -103,9 +103,21 @@
                 <span v-else class="text-sm text-red-600 font-medium">Agotado</span>
               </div>
 
-              <button v-if="product.stock > 0" @click="addToCart(product)" class="btn btn-primary w-full">
+              <!-- Own Booth Message -->
+              <div v-if="isBoothMember" class="text-center py-2 px-3 bg-yellow-50 text-yellow-700 rounded-lg text-sm">
+                No puedes comprar de tu propio booth
+              </div>
+
+              <!-- Add to Cart Button -->
+              <button
+                v-else-if="product.stock > 0"
+                @click="addToCart(product)"
+                class="btn btn-primary w-full"
+              >
                 Agregar al Carrito
               </button>
+
+              <!-- Out of Stock -->
               <button v-else disabled class="btn btn-secondary w-full opacity-50 cursor-not-allowed">
                 No Disponible
               </button>
@@ -131,6 +143,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import { useBoothsStore } from '@/stores/booths'
 import { useProductsStore } from '@/stores/products'
 import { useCartStore } from '@/stores/cart'
@@ -149,6 +162,7 @@ const loading = ref(true)
 const error = ref(null)
 const booth = ref(null)
 const products = ref([])
+const isBoothMember = ref(false)
 
 // Agora streaming
 const {
@@ -169,6 +183,14 @@ onMounted(async () => {
     booth.value = await boothsStore.fetchBoothById(boothId)
     const response = await productsStore.fetchProductsByBooth(boothId)
     products.value = response.products
+
+    // Check if current user is a booth member
+    const authStore = useAuthStore()
+    if (authStore.isAuthenticated && booth.value.members) {
+      isBoothMember.value = booth.value.members.some(
+        member => member.userId === authStore.user?.id
+      )
+    }
 
     // If booth is streaming, join the stream
     if (booth.value.isStreaming) {

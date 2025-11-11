@@ -6,13 +6,25 @@ export async function createOrder(req, res) {
   try {
     const { boothId, items, shippingAddress, paymentMethod, paymentProof, saveShippingAddress } = req.body;
 
-    // Verify booth exists
+    // Verify booth exists and check membership
     const booth = await prisma.booth.findUnique({
-      where: { id: boothId }
+      where: { id: boothId },
+      include: {
+        members: {
+          where: { userId: req.user.id }
+        }
+      }
     });
 
     if (!booth) {
       return res.status(404).json({ error: 'Booth not found' });
+    }
+
+    // Prevent exhibitors from buying from their own booth
+    if (booth.members.length > 0) {
+      return res.status(403).json({
+        error: 'No puedes comprar productos de tu propio booth'
+      });
     }
 
     // Fetch products and verify stock
