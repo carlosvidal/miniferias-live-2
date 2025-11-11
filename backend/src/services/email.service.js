@@ -1,4 +1,5 @@
-import nodemailer from 'nodemailer';
+import nodemailerPkg from 'nodemailer';
+const nodemailer = nodemailerPkg.default || nodemailerPkg;
 import dotenv from 'dotenv';
 
 dotenv.config();
