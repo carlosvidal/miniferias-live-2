@@ -5,15 +5,22 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const transporter = nodemailer.createTransporter({
-  host: 'smtp.sendgrid.net',
-  port: 587,
-  secure: false,
-  auth: {
-    user: 'apikey',
-    pass: process.env.SENDGRID_API_KEY
+// Lazy initialization - only create transporter when needed
+let transporter = null;
+function getTransporter() {
+  if (!transporter) {
+    transporter = nodemailer.createTransporter({
+      host: 'smtp.sendgrid.net',
+      port: 587,
+      secure: false,
+      auth: {
+        user: 'apikey',
+        pass: process.env.SENDGRID_API_KEY
+      }
+    });
   }
-});
+  return transporter;
+}
 
 export async function sendEmail({ to, subject, html, text }) {
   try {
@@ -22,7 +29,7 @@ export async function sendEmail({ to, subject, html, text }) {
       return null;
     }
 
-    const info = await transporter.sendMail({
+    const info = await getTransporter().sendMail({
       from: process.env.FROM_EMAIL || 'noreply@miniferias.pe',
       to,
       subject,
