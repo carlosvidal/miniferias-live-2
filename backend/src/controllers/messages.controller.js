@@ -102,18 +102,27 @@ export async function deleteMessage(req, res) {
 
     const message = await prisma.message.findUnique({
       where: { id },
-      include: { booth: true }
+      include: {
+        booth: {
+          include: {
+            members: {
+              where: { userId: req.user.id }
+            }
+          }
+        }
+      }
     });
 
     if (!message) {
       return res.status(404).json({ error: 'Message not found' });
     }
 
-    // Only admin or booth owner or message author can delete
+    // Only admin, booth member (OWNER/OPERATOR/MODERATOR), or message author can delete
+    const isMember = message.booth.members.length > 0;
     const canDelete =
       req.user.role === 'ADMIN' ||
       message.userId === req.user.id ||
-      message.booth.userId === req.user.id;
+      isMember;
 
     if (!canDelete) {
       return res.status(403).json({ error: 'Not authorized to delete this message' });

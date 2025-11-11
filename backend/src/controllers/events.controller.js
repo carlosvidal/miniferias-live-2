@@ -90,11 +90,15 @@ export async function getEventById(req, res) {
       include: {
         booths: {
           include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true
+            members: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true
+                  }
+                }
               }
             },
             _count: {
@@ -125,11 +129,15 @@ export async function getEventBySlug(req, res) {
       include: {
         booths: {
           include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                profilePicture: true
+            members: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    profilePicture: true
+                  }
+                }
               }
             },
             _count: {

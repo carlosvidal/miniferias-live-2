@@ -236,13 +236,19 @@ export async function getOrderById(req, res) {
 
     // Verify access
     const booth = await prisma.booth.findUnique({
-      where: { id: order.boothId }
+      where: { id: order.boothId },
+      include: {
+        members: {
+          where: { userId: req.user.id }
+        }
+      }
     });
 
+    const isMember = booth && booth.members.length > 0;
     const hasAccess =
       req.user.role === 'ADMIN' ||
       order.userId === req.user.id ||
-      (booth && booth.userId === req.user.id);
+      isMember;
 
     if (!hasAccess) {
       return res.status(403).json({ error: 'Not authorized to view this order' });
@@ -264,7 +270,13 @@ export async function updateOrderStatus(req, res) {
     const existingOrder = await prisma.order.findUnique({
       where: { id },
       include: {
-        booth: true,
+        booth: {
+          include: {
+            members: {
+              where: { userId: req.user.id }
+            }
+          }
+        },
         user: true
       }
     });
@@ -273,8 +285,12 @@ export async function updateOrderStatus(req, res) {
       return res.status(404).json({ error: 'Order not found' });
     }
 
-    // Verify user owns the booth or is admin
-    if (req.user.role !== 'ADMIN' && existingOrder.booth.userId !== req.user.id) {
+    // Verify user is a booth member (OWNER/OPERATOR) or is admin
+    const membership = existingOrder.booth.members[0];
+    const canUpdate = req.user.role === 'ADMIN' ||
+                      (membership && (membership.role === 'OWNER' || membership.role === 'OPERATOR'));
+
+    if (!canUpdate) {
       return res.status(403).json({ error: 'Not authorized to update this order' });
     }
 
