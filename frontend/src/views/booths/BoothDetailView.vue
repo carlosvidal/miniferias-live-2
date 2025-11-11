@@ -16,10 +16,10 @@
               <p class="text-gray-600 mb-4">{{ booth.description }}</p>
               <div class="flex items-center gap-4 text-sm text-gray-500">
                 <span>📦 {{ products.length }} productos</span>
-                <span v-if="booth.event">📅 {{ booth.event.title }}</span>
+                <span v-if="booth.event">📅 {{ booth.event.name }}</span>
               </div>
             </div>
-            <span v-if="booth.isLive" class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium flex items-center gap-2">
+            <span v-if="booth.isStreaming" class="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium flex items-center gap-2">
               <span class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
               EN VIVO
             </span>
@@ -27,7 +27,7 @@
         </div>
 
         <!-- Live Streaming Placeholder -->
-        <div v-if="booth.isLive" class="card bg-gradient-to-br from-purple-50 to-pink-50">
+        <div v-if="booth.isStreaming" class="card bg-gradient-to-br from-purple-50 to-pink-50">
           <div class="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg flex items-center justify-center text-white">
             <div class="text-center">
               <svg class="w-24 h-24 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
