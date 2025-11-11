@@ -101,3 +101,11 @@ export const messagesAPI = {
 export const adminAPI = {
   getStats: () => api.get('/admin/stats')
 }
+
+// Users API
+export const usersAPI = {
+  getAll: (params) => api.get('/users', { params }),
+  create: (data) => api.post('/users', data),
+  updateRole: (id, role) => api.patch(`/users/${id}/role`, { role }),
+  delete: (id) => api.delete(`/users/${id}`)
+}

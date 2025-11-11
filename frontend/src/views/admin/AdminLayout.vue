@@ -13,6 +13,9 @@
           <router-link to="/admin/booths" class="block px-4 py-2 rounded hover:bg-gray-100">
             Booths
           </router-link>
+          <router-link to="/admin/users" class="block px-4 py-2 rounded hover:bg-gray-100">
+            Usuarios
+          </router-link>
         </nav>
       </aside>
       <main class="flex-1 p-8">
