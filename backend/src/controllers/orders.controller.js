@@ -140,11 +140,20 @@ export async function getOrders(req, res) {
     if (req.user.role === 'VISITOR') {
       where.userId = req.user.id;
     } else if (req.user.role === 'EXHIBITOR') {
-      const booth = await prisma.booth.findUnique({
-        where: { userId: req.user.id }
+      // Find booths where user is a member
+      const booths = await prisma.booth.findMany({
+        where: {
+          members: {
+            some: {
+              userId: req.user.id
+            }
+          }
+        },
+        select: { id: true }
       });
-      if (booth) {
-        where.boothId = booth.id;
+
+      if (booths.length > 0) {
+        where.boothId = { in: booths.map(b => b.id) };
       }
     }
 
