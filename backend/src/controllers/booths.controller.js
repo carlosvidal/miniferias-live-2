@@ -23,7 +23,8 @@ export async function createBooth(req, res) {
       userId = user.id;
     }
 
-    if (!userId) {
+    // Allow creating booth without user only if ADMIN
+    if (!userId && req.user.role !== 'ADMIN') {
       return res.status(400).json({ error: 'Either userId or exhibitorEmail is required' });
     }
 
@@ -39,17 +40,24 @@ export async function createBooth(req, res) {
     // Remove userId from boothData (no longer part of Booth model)
     delete boothData.userId;
 
-    // Create booth with owner as member (Many-to-Many)
-    const booth = await prisma.booth.create({
-      data: {
-        ...boothData,
-        members: {
-          create: {
-            userId: userId,
-            role: 'OWNER'
-          }
+    // Prepare booth data with optional member
+    const boothCreateData = {
+      ...boothData
+    };
+
+    // Only add member if userId is provided
+    if (userId) {
+      boothCreateData.members = {
+        create: {
+          userId: userId,
+          role: 'OWNER'
         }
-      },
+      };
+    }
+
+    // Create booth
+    const booth = await prisma.booth.create({
+      data: boothCreateData,
       include: {
         members: {
           include: {
@@ -432,5 +440,218 @@ export async function getStreamToken(req, res) {
   } catch (error) {
     console.error('Get stream token error:', error);
     res.status(500).json({ error: 'Failed to get stream token' });
+  }
+}
+
+// Booth Members Management
+export async function addBoothMember(req, res) {
+  try {
+    const { id } = req.params; // booth id
+    const { userId, email, role = 'OPERATOR' } = req.body;
+
+    // Find user by userId or email
+    let targetUserId = userId;
+    if (email) {
+      const user = await prisma.user.findUnique({
+        where: { email }
+      });
+
+      if (!user) {
+        return res.status(404).json({ error: 'User not found with that email' });
+      }
+
+      targetUserId = user.id;
+    }
+
+    if (!targetUserId) {
+      return res.status(400).json({ error: 'Either userId or email is required' });
+    }
+
+    // Check if booth exists and user has permission
+    const booth = await prisma.booth.findUnique({
+      where: { id },
+      include: {
+        members: {
+          where: { userId: req.user.id }
+        }
+      }
+    });
+
+    if (!booth) {
+      return res.status(404).json({ error: 'Booth not found' });
+    }
+
+    // Only ADMIN or booth OWNER can add members
+    const membership = booth.members[0];
+    const canAddMember = req.user.role === 'ADMIN' || (membership && membership.role === 'OWNER');
+
+    if (!canAddMember) {
+      return res.status(403).json({ error: 'Not authorized to add members to this booth' });
+    }
+
+    // Check if user is already a member
+    const existingMember = await prisma.boothMember.findUnique({
+      where: {
+        userId_boothId: {
+          userId: targetUserId,
+          boothId: id
+        }
+      }
+    });
+
+    if (existingMember) {
+      return res.status(400).json({ error: 'User is already a member of this booth' });
+    }
+
+    // Add member
+    const newMember = await prisma.boothMember.create({
+      data: {
+        userId: targetUserId,
+        boothId: id,
+        role
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    res.status(201).json({
+      message: 'Member added successfully',
+      member: newMember
+    });
+  } catch (error) {
+    console.error('Add booth member error:', error);
+    res.status(500).json({ error: 'Failed to add booth member' });
+  }
+}
+
+export async function removeBoothMember(req, res) {
+  try {
+    const { id, memberId } = req.params; // booth id and membership id
+
+    // Check if booth exists and user has permission
+    const booth = await prisma.booth.findUnique({
+      where: { id },
+      include: {
+        members: true
+      }
+    });
+
+    if (!booth) {
+      return res.status(404).json({ error: 'Booth not found' });
+    }
+
+    // Find the membership to remove
+    const membershipToRemove = await prisma.boothMember.findUnique({
+      where: { id: memberId }
+    });
+
+    if (!membershipToRemove || membershipToRemove.boothId !== id) {
+      return res.status(404).json({ error: 'Member not found in this booth' });
+    }
+
+    // Check permission
+    const currentUserMembership = booth.members.find(m => m.userId === req.user.id);
+    const canRemoveMember = req.user.role === 'ADMIN' ||
+                            (currentUserMembership && currentUserMembership.role === 'OWNER') ||
+                            membershipToRemove.userId === req.user.id; // Can remove self
+
+    if (!canRemoveMember) {
+      return res.status(403).json({ error: 'Not authorized to remove members from this booth' });
+    }
+
+    // Prevent removing the last OWNER
+    if (membershipToRemove.role === 'OWNER') {
+      const ownerCount = booth.members.filter(m => m.role === 'OWNER').length;
+      if (ownerCount === 1) {
+        return res.status(400).json({ error: 'Cannot remove the last owner. Assign another owner first.' });
+      }
+    }
+
+    // Remove member
+    await prisma.boothMember.delete({
+      where: { id: memberId }
+    });
+
+    res.json({ message: 'Member removed successfully' });
+  } catch (error) {
+    console.error('Remove booth member error:', error);
+    res.status(500).json({ error: 'Failed to remove booth member' });
+  }
+}
+
+export async function updateBoothMemberRole(req, res) {
+  try {
+    const { id, memberId } = req.params; // booth id and membership id
+    const { role } = req.body;
+
+    if (!role || !['OWNER', 'OPERATOR', 'MODERATOR'].includes(role)) {
+      return res.status(400).json({ error: 'Valid role is required (OWNER, OPERATOR, MODERATOR)' });
+    }
+
+    // Check if booth exists and user has permission
+    const booth = await prisma.booth.findUnique({
+      where: { id },
+      include: {
+        members: true
+      }
+    });
+
+    if (!booth) {
+      return res.status(404).json({ error: 'Booth not found' });
+    }
+
+    // Find the membership to update
+    const membershipToUpdate = booth.members.find(m => m.id === memberId);
+
+    if (!membershipToUpdate) {
+      return res.status(404).json({ error: 'Member not found in this booth' });
+    }
+
+    // Only ADMIN or booth OWNER can update roles
+    const currentUserMembership = booth.members.find(m => m.userId === req.user.id);
+    const canUpdateRole = req.user.role === 'ADMIN' ||
+                          (currentUserMembership && currentUserMembership.role === 'OWNER');
+
+    if (!canUpdateRole) {
+      return res.status(403).json({ error: 'Not authorized to update member roles' });
+    }
+
+    // If changing from OWNER to something else, ensure there's another OWNER
+    if (membershipToUpdate.role === 'OWNER' && role !== 'OWNER') {
+      const ownerCount = booth.members.filter(m => m.role === 'OWNER').length;
+      if (ownerCount === 1) {
+        return res.status(400).json({ error: 'Cannot change the last owner role. Assign another owner first.' });
+      }
+    }
+
+    // Update role
+    const updatedMember = await prisma.boothMember.update({
+      where: { id: memberId },
+      data: { role },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    res.json({
+      message: 'Member role updated successfully',
+      member: updatedMember
+    });
+  } catch (error) {
+    console.error('Update booth member role error:', error);
+    res.status(500).json({ error: 'Failed to update member role' });
   }
 }

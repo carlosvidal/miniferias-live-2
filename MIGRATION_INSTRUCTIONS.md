@@ -26,18 +26,23 @@ This migration transforms the Booth-User relationship from **1:1** to **Many-to-
 
 ### Step 1: Database Migration
 
-Run the SQL migration on your PostgreSQL database:
+Run the SQL migrations on your PostgreSQL database:
 
 ```bash
 cd /home/user/miniferias-live-2/backend
+
+# Migration 1: Add Many-to-Many booth members
 psql $DATABASE_URL -f prisma/migrations/add_booth_member_many_to_many.sql
+
+# Migration 2: Add bannerUrl field to Booth
+psql $DATABASE_URL -f prisma/migrations/add_bannerurl_to_booth.sql
 ```
 
 Or if you have Prisma CLI working with internet connectivity:
 
 ```bash
 cd /home/user/miniferias-live-2/backend
-PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1 npx prisma migrate dev --name add-booth-member-many-to-many
+npx prisma migrate dev
 ```
 
 ### Step 2: Regenerate Prisma Client
