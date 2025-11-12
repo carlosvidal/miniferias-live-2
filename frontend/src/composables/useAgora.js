@@ -9,70 +9,56 @@ export function useAgora() {
   const isJoined = ref(false)
   const isPublishing = ref(false)
 
+  // Handle user published event with safe subscription
+  async function handleUserPublished(user, mediaType) {
+    try {
+      await client.value.subscribe(user, mediaType)
+      console.log(`Subscribed to ${mediaType} from user ${user.uid}`)
+
+      if (mediaType === 'video') {
+        const remoteUser = remoteUsers.value.find(u => u.uid === user.uid)
+        if (remoteUser) {
+          remoteUser.videoTrack = user.videoTrack
+        } else {
+          remoteUsers.value.push({
+            uid: user.uid,
+            videoTrack: user.videoTrack,
+            audioTrack: user.audioTrack
+          })
+        }
+      }
+
+      if (mediaType === 'audio') {
+        const remoteUser = remoteUsers.value.find(u => u.uid === user.uid)
+        if (remoteUser) {
+          remoteUser.audioTrack = user.audioTrack
+          user.audioTrack.play()
+        }
+      }
+    } catch (error) {
+      console.error('Failed to subscribe to user:', error)
+    }
+  }
+
   async function initClient() {
     if (!client.value) {
       client.value = AgoraRTC.createClient({ mode: 'live', codec: 'vp8' })
 
       client.value.on('user-published', async (user, mediaType) => {
-        try {
-          await client.value.subscribe(user, mediaType)
-
-          if (mediaType === 'video') {
-            const remoteUser = remoteUsers.value.find(u => u.uid === user.uid)
-            if (remoteUser) {
-              remoteUser.videoTrack = user.videoTrack
-            } else {
-              remoteUsers.value.push({
-                uid: user.uid,
-                videoTrack: user.videoTrack,
-                audioTrack: user.audioTrack
-              })
+        // Wait until we're fully joined before subscribing
+        if (!isJoined.value) {
+          console.log('Deferring subscription until joined')
+          // Wait for join to complete, then subscribe
+          const checkInterval = setInterval(async () => {
+            if (isJoined.value) {
+              clearInterval(checkInterval)
+              await handleUserPublished(user, mediaType)
             }
-          }
-
-          if (mediaType === 'audio') {
-            const remoteUser = remoteUsers.value.find(u => u.uid === user.uid)
-            if (remoteUser) {
-              remoteUser.audioTrack = user.audioTrack
-              user.audioTrack.play()
-            }
-          }
-        } catch (error) {
-          console.error('Failed to subscribe to user:', error)
-          // Retry subscription after a short delay if user not in channel yet
-          if (error.code === 'INVALID_REMOTE_USER') {
-            setTimeout(async () => {
-              try {
-                await client.value.subscribe(user, mediaType)
-                console.log('Successfully subscribed on retry')
-
-                // Update remoteUsers after successful retry
-                if (mediaType === 'video') {
-                  const remoteUser = remoteUsers.value.find(u => u.uid === user.uid)
-                  if (remoteUser) {
-                    remoteUser.videoTrack = user.videoTrack
-                  } else {
-                    remoteUsers.value.push({
-                      uid: user.uid,
-                      videoTrack: user.videoTrack,
-                      audioTrack: user.audioTrack
-                    })
-                  }
-                }
-
-                if (mediaType === 'audio') {
-                  const remoteUser = remoteUsers.value.find(u => u.uid === user.uid)
-                  if (remoteUser) {
-                    remoteUser.audioTrack = user.audioTrack
-                    user.audioTrack.play()
-                  }
-                }
-              } catch (retryError) {
-                console.error('Retry subscribe failed:', retryError)
-              }
-            }, 500)
-          }
+          }, 100)
+          return
         }
+
+        await handleUserPublished(user, mediaType)
       })
 
       client.value.on('user-unpublished', (user, mediaType) => {
@@ -104,6 +90,20 @@ export function useAgora() {
       isJoined.value = true
 
       console.log('Joined channel:', channel)
+
+      // Subscribe to existing remote users (if host is already streaming)
+      const existingRemoteUsers = client.value.remoteUsers
+      if (existingRemoteUsers && existingRemoteUsers.length > 0) {
+        console.log(`Found ${existingRemoteUsers.length} existing remote users`)
+        for (const user of existingRemoteUsers) {
+          if (user.hasVideo) {
+            await handleUserPublished(user, 'video')
+          }
+          if (user.hasAudio) {
+            await handleUserPublished(user, 'audio')
+          }
+        }
+      }
     } catch (error) {
       console.error('Failed to join channel:', error)
       throw error
