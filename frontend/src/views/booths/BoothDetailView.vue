@@ -260,6 +260,7 @@ const streamError = ref(null)
 const newComment = ref('')
 const messages = ref([])
 let realtimeChannel = null
+let messagePollingInterval = null
 
 // Only show last 5 messages as overlay
 const recentMessages = computed(() => {
@@ -369,9 +370,11 @@ function subscribeToMessages() {
     if (!realtimeChannel) {
       console.warn('Real-time chat not available (Supabase not configured)')
       // Poll for messages every 5 seconds as fallback
-      setInterval(async () => {
-        await loadMessages()
-      }, 5000)
+      if (!messagePollingInterval) {
+        messagePollingInterval = setInterval(async () => {
+          await loadMessages()
+        }, 5000)
+      }
     }
   } catch (error) {
     console.error('Failed to subscribe to messages:', error)
@@ -443,6 +446,10 @@ onUnmounted(async () => {
   }
   if (realtimeChannel) {
     realtimeChannel.unsubscribe()
+  }
+  if (messagePollingInterval) {
+    clearInterval(messagePollingInterval)
+    messagePollingInterval = null
   }
 })
 
