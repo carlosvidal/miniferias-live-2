@@ -142,7 +142,20 @@ const form = ref({
 async function handleSubmit() {
   try {
     await authStore.register(form.value)
-    router.push('/')
+
+    // Redirect based on user role
+    let redirect = '/'
+
+    // Exhibitors should go to their dashboard
+    if (authStore.isExhibitor) {
+      redirect = '/exhibitor'
+    }
+    // Admins should go to admin panel
+    else if (authStore.isAdmin) {
+      redirect = '/admin'
+    }
+
+    router.push(redirect)
   } catch (error) {
     console.error('Registration failed:', error)
   }

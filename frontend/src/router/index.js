@@ -158,6 +158,29 @@ router.beforeEach((to, from, next) => {
     return
   }
 
+  // EXHIBITOR ROUTE RESTRICTION: Redirect exhibitors away from public routes
+  if (authStore.isAuthenticated && authStore.user?.role === 'EXHIBITOR') {
+    // Define allowed routes for exhibitors
+    const exhibitorAllowedRoutes = [
+      'exhibitor',
+      'exhibitor-dashboard',
+      'exhibitor-booth',
+      'exhibitor-products',
+      'exhibitor-orders',
+      'exhibitor-live',
+      'profile',
+      'login',
+      'register'
+    ]
+
+    // If exhibitor tries to access a route they shouldn't
+    if (!exhibitorAllowedRoutes.includes(to.name)) {
+      console.log(`Exhibitor attempted to access ${to.name}, redirecting to exhibitor dashboard`)
+      next({ name: 'exhibitor-dashboard' })
+      return
+    }
+  }
+
   next()
 })
 

@@ -92,7 +92,19 @@ const form = ref({
 async function handleSubmit() {
   try {
     await authStore.login(form.value)
-    const redirect = route.query.redirect || '/'
+
+    // Redirect based on user role
+    let redirect = route.query.redirect || '/'
+
+    // Exhibitors should go to their dashboard
+    if (authStore.isExhibitor) {
+      redirect = '/exhibitor'
+    }
+    // Admins should go to admin panel
+    else if (authStore.isAdmin) {
+      redirect = '/admin'
+    }
+
     router.push(redirect)
   } catch (error) {
     console.error('Login failed:', error)
