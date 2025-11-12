@@ -45,19 +45,13 @@ export function useAgora() {
       client.value = AgoraRTC.createClient({ mode: 'live', codec: 'vp8' })
 
       client.value.on('user-published', async (user, mediaType) => {
-        // Wait until we're fully joined before subscribing
+        // Only handle user-published events AFTER we're fully joined
         if (!isJoined.value) {
-          console.log('Deferring subscription until joined')
-          // Wait for join to complete, then subscribe
-          const checkInterval = setInterval(async () => {
-            if (isJoined.value) {
-              clearInterval(checkInterval)
-              await handleUserPublished(user, mediaType)
-            }
-          }, 100)
+          console.log('⏭️ Ignoring early user-published event (not joined yet)')
           return
         }
 
+        console.log('📢 user-published event:', user.uid, mediaType)
         await handleUserPublished(user, mediaType)
       })
 
@@ -87,15 +81,22 @@ export function useAgora() {
 
       // Join channel
       await client.value.join(appId, channel, token, uid)
-      isJoined.value = true
 
-      console.log('Joined channel:', channel)
+      console.log('✅ Joined channel:', channel, 'as', role, 'with UID:', uid)
+
+      // Wait a bit for the channel state to stabilize
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      isJoined.value = true
 
       // Subscribe to existing remote users (if host is already streaming)
       const existingRemoteUsers = client.value.remoteUsers
+      console.log('🔍 Checking for existing remote users...', existingRemoteUsers.length)
+
       if (existingRemoteUsers && existingRemoteUsers.length > 0) {
-        console.log(`Found ${existingRemoteUsers.length} existing remote users`)
+        console.log(`📺 Found ${existingRemoteUsers.length} remote user(s) already streaming`)
         for (const user of existingRemoteUsers) {
+          console.log(`  - User ${user.uid}: hasVideo=${user.hasVideo}, hasAudio=${user.hasAudio}`)
           if (user.hasVideo) {
             await handleUserPublished(user, 'video')
           }
@@ -103,9 +104,11 @@ export function useAgora() {
             await handleUserPublished(user, 'audio')
           }
         }
+      } else {
+        console.log('⏳ No remote users yet, waiting for user-published events...')
       }
     } catch (error) {
-      console.error('Failed to join channel:', error)
+      console.error('❌ Failed to join channel:', error)
       throw error
     }
   }
