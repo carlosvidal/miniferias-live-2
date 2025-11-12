@@ -1,6 +1,20 @@
 import prisma from '../config/prisma.js';
 import { generateAgoraToken } from '../services/agora.service.js';
 
+// Helper function to generate a valid Agora UID from user ID
+// Agora requires UID to be in range [0, 10000] for basic plan or a string
+function generateAgoraUid(userId) {
+  // Create a simple hash from the UUID
+  let hash = 0;
+  const cleanId = userId.replace(/-/g, '');
+  for (let i = 0; i < cleanId.length; i++) {
+    hash = ((hash << 5) - hash) + cleanId.charCodeAt(i);
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  // Return a positive number in range [1, 10000]
+  return Math.abs(hash % 10000) + 1;
+}
+
 export async function createBooth(req, res) {
   try {
     const { exhibitorEmail, ...boothData } = req.body;
@@ -342,7 +356,8 @@ export async function startStreaming(req, res) {
     });
 
     // Generate Agora token for host
-    const agoraData = generateAgoraToken(channelName, parseInt(req.user.id.replace(/-/g, '').substring(0, 10), 16), 'host');
+    const uid = generateAgoraUid(req.user.id);
+    const agoraData = generateAgoraToken(channelName, uid, 'host');
 
     res.json({
       message: 'Streaming started successfully',
@@ -431,8 +446,8 @@ export async function getStreamToken(req, res) {
     }
 
     const uid = req.user
-      ? parseInt(req.user.id.replace(/-/g, '').substring(0, 10), 16)
-      : Math.floor(Math.random() * 100000);
+      ? generateAgoraUid(req.user.id)
+      : Math.floor(Math.random() * 10000) + 1;
 
     const agoraData = generateAgoraToken(booth.agoraChannel, uid, role);
 
