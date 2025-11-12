@@ -1,8 +1,8 @@
 <template>
   <div class="min-h-screen bg-gray-50 pb-6">
     <!-- Filters - Horizontal Scroll -->
-    <div class="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3 -mx-4">
-      <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+    <div class="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 md:px-6 py-3 -mx-4">
+      <div class="flex gap-2 overflow-x-auto md:justify-center pb-1 scrollbar-hide">
         <button
           v-for="status in orderStatuses"
           :key="status.value"
@@ -24,7 +24,7 @@
     </div>
 
     <!-- Orders List -->
-    <div v-else-if="filteredOrders.length" class="p-4 space-y-3">
+    <div v-else-if="filteredOrders.length" class="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
       <div v-for="order in filteredOrders" :key="order.id" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <!-- Order Header -->
         <div class="p-4 border-b border-gray-100">

@@ -15,8 +15,8 @@
 
     <!-- Main Content -->
     <div v-else class="pb-4">
-      <!-- Stats Cards - Mobile First -->
-      <div class="grid grid-cols-2 gap-3 p-4">
+      <!-- Stats Cards - Responsive Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 p-4 md:p-6">
         <!-- Total Sales -->
         <div class="rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 shadow-lg">
           <div class="flex items-center justify-between mb-2">
@@ -67,10 +67,10 @@
       </div>
 
       <!-- Quick Actions - Primary CTA -->
-      <div class="px-4">
+      <div class="px-4 md:px-6">
         <router-link
           to="/exhibitor/live"
-          class="flex items-center justify-between p-4 rounded-2xl transition-all active:scale-[0.98]"
+          class="flex items-center justify-between p-4 md:p-6 rounded-2xl transition-all active:scale-[0.98] hover:scale-[1.01]"
           :class="booth.isStreaming ? 'bg-gradient-to-r from-red-500 to-pink-600 shadow-lg shadow-red-500/30' : 'bg-gradient-to-r from-purple-500 to-indigo-600 shadow-lg shadow-purple-500/30'"
         >
           <div class="flex items-center gap-3">
@@ -90,10 +90,12 @@
         </router-link>
       </div>
 
-      <!-- Recent Orders -->
-      <div class="px-4 mt-6">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-lg font-bold text-gray-900">Pedidos Recientes</h2>
+      <!-- Recent Orders & Top Products - Two Column Layout on Desktop -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 px-4 md:px-6 mt-6">
+        <!-- Recent Orders -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-lg font-bold text-gray-900">Pedidos Recientes</h2>
           <router-link to="/exhibitor/orders" class="text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1">
             Ver todos
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,10 +131,10 @@
           </div>
           <p class="text-gray-500 text-sm">No hay pedidos recientes</p>
         </div>
-      </div>
+        </div>
 
-      <!-- Top Products -->
-      <div class="px-4 mt-6 pb-4">
+        <!-- Top Products -->
+        <div class="pb-4">
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-lg font-bold text-gray-900">Top Productos</h2>
           <router-link to="/exhibitor/products" class="text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1">
@@ -177,6 +179,7 @@
             </svg>
           </div>
           <p class="text-gray-500 text-sm">No hay productos vendidos aún</p>
+        </div>
         </div>
       </div>
     </div>
