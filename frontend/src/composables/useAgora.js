@@ -14,26 +14,63 @@ export function useAgora() {
       client.value = AgoraRTC.createClient({ mode: 'live', codec: 'vp8' })
 
       client.value.on('user-published', async (user, mediaType) => {
-        await client.value.subscribe(user, mediaType)
+        try {
+          await client.value.subscribe(user, mediaType)
 
-        if (mediaType === 'video') {
-          const remoteUser = remoteUsers.value.find(u => u.uid === user.uid)
-          if (remoteUser) {
-            remoteUser.videoTrack = user.videoTrack
-          } else {
-            remoteUsers.value.push({
-              uid: user.uid,
-              videoTrack: user.videoTrack,
-              audioTrack: user.audioTrack
-            })
+          if (mediaType === 'video') {
+            const remoteUser = remoteUsers.value.find(u => u.uid === user.uid)
+            if (remoteUser) {
+              remoteUser.videoTrack = user.videoTrack
+            } else {
+              remoteUsers.value.push({
+                uid: user.uid,
+                videoTrack: user.videoTrack,
+                audioTrack: user.audioTrack
+              })
+            }
           }
-        }
 
-        if (mediaType === 'audio') {
-          const remoteUser = remoteUsers.value.find(u => u.uid === user.uid)
-          if (remoteUser) {
-            remoteUser.audioTrack = user.audioTrack
-            user.audioTrack.play()
+          if (mediaType === 'audio') {
+            const remoteUser = remoteUsers.value.find(u => u.uid === user.uid)
+            if (remoteUser) {
+              remoteUser.audioTrack = user.audioTrack
+              user.audioTrack.play()
+            }
+          }
+        } catch (error) {
+          console.error('Failed to subscribe to user:', error)
+          // Retry subscription after a short delay if user not in channel yet
+          if (error.code === 'INVALID_REMOTE_USER') {
+            setTimeout(async () => {
+              try {
+                await client.value.subscribe(user, mediaType)
+                console.log('Successfully subscribed on retry')
+
+                // Update remoteUsers after successful retry
+                if (mediaType === 'video') {
+                  const remoteUser = remoteUsers.value.find(u => u.uid === user.uid)
+                  if (remoteUser) {
+                    remoteUser.videoTrack = user.videoTrack
+                  } else {
+                    remoteUsers.value.push({
+                      uid: user.uid,
+                      videoTrack: user.videoTrack,
+                      audioTrack: user.audioTrack
+                    })
+                  }
+                }
+
+                if (mediaType === 'audio') {
+                  const remoteUser = remoteUsers.value.find(u => u.uid === user.uid)
+                  if (remoteUser) {
+                    remoteUser.audioTrack = user.audioTrack
+                    user.audioTrack.play()
+                  }
+                }
+              } catch (retryError) {
+                console.error('Retry subscribe failed:', retryError)
+              }
+            }, 500)
           }
         }
       })
