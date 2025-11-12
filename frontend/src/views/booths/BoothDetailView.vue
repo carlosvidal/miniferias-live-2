@@ -209,7 +209,7 @@ async function initStream() {
     streamStatus.value = 'Obteniendo acceso al stream...'
 
     // Get stream token from backend
-    const response = await api.get(`/booths/${booth.value.id}/stream/token`)
+    const response = await api.get(`/booths/${booth.value.id}/stream-token`)
     const { appId, channel, token, uid } = response.data
 
     streamStatus.value = 'Conectando al canal...'
