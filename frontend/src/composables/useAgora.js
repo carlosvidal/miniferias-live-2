@@ -27,15 +27,16 @@ export function useAgora() {
           })
         }
 
-        // Try to play video immediately
-        await new Promise(resolve => setTimeout(resolve, 100))
-        const playerElement = document.getElementById(`remote-player-${user.uid}`)
-        if (playerElement && user.videoTrack) {
-          console.log(`🎥 Playing video for user ${user.uid}`)
-          user.videoTrack.play(playerElement)
-        } else {
-          console.log(`⚠️ Player element not found for user ${user.uid}`)
-        }
+        // Try to play video without blocking
+        setTimeout(() => {
+          const playerElement = document.getElementById(`remote-player-${user.uid}`)
+          if (playerElement && user.videoTrack) {
+            console.log(`🎥 Playing video for user ${user.uid}`)
+            user.videoTrack.play(playerElement)
+          } else {
+            console.log(`⚠️ Player element not found for user ${user.uid}`)
+          }
+        }, 50)
       }
 
       if (mediaType === 'audio') {
@@ -98,29 +99,30 @@ export function useAgora() {
 
       console.log('✅ Joined channel:', channel, 'as', role, 'with UID:', uid)
 
-      // Wait a bit for the channel state to stabilize
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
+      // Mark as joined immediately
       isJoined.value = true
 
-      // Subscribe to existing remote users (if host is already streaming)
-      const existingRemoteUsers = client.value.remoteUsers
-      console.log('🔍 Checking for existing remote users...', existingRemoteUsers.length)
+      // Use setTimeout to not block the UI thread
+      setTimeout(async () => {
+        // Subscribe to existing remote users (if host is already streaming)
+        const existingRemoteUsers = client.value.remoteUsers
+        console.log('🔍 Checking for existing remote users...', existingRemoteUsers.length)
 
-      if (existingRemoteUsers && existingRemoteUsers.length > 0) {
-        console.log(`📺 Found ${existingRemoteUsers.length} remote user(s) already streaming`)
-        for (const user of existingRemoteUsers) {
-          console.log(`  - User ${user.uid}: hasVideo=${user.hasVideo}, hasAudio=${user.hasAudio}`)
-          if (user.hasVideo) {
-            await handleUserPublished(user, 'video')
+        if (existingRemoteUsers && existingRemoteUsers.length > 0) {
+          console.log(`📺 Found ${existingRemoteUsers.length} remote user(s) already streaming`)
+          for (const user of existingRemoteUsers) {
+            console.log(`  - User ${user.uid}: hasVideo=${user.hasVideo}, hasAudio=${user.hasAudio}`)
+            if (user.hasVideo) {
+              await handleUserPublished(user, 'video')
+            }
+            if (user.hasAudio) {
+              await handleUserPublished(user, 'audio')
+            }
           }
-          if (user.hasAudio) {
-            await handleUserPublished(user, 'audio')
-          }
+        } else {
+          console.log('⏳ No remote users yet, waiting for user-published events...')
         }
-      } else {
-        console.log('⏳ No remote users yet, waiting for user-published events...')
-      }
+      }, 800) // Check after 800ms without blocking
     } catch (error) {
       console.error('❌ Failed to join channel:', error)
       throw error
