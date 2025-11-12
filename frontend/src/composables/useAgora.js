@@ -9,6 +9,7 @@ export function useAgora() {
   const isJoined = ref(false)
   const isPublishing = ref(false)
   const isReadyForEvents = ref(false) // New flag to prevent early subscriptions
+  let onVideoTrackCallback = null // Callback for when video track is ready
 
   // Handle user published event with safe subscription
   async function handleUserPublished(user, mediaType) {
@@ -24,29 +25,30 @@ export function useAgora() {
           remoteUsers.value.push({
             uid: user.uid,
             videoTrack: user.videoTrack,
-            audioTrack: user.audioTrack
+            audioTrack: null
           })
         }
 
-        // Try to play video without blocking
-        setTimeout(() => {
-          const playerElement = document.getElementById(`remote-player-${user.uid}`)
-          if (playerElement && user.videoTrack) {
-            console.log(`🎥 Playing video for user ${user.uid}`)
-            user.videoTrack.play(playerElement)
-          } else {
-            console.log(`⚠️ Player element not found for user ${user.uid}`)
-          }
-        }, 50)
+        // Notify callback so it can play the video when DOM is ready
+        if (onVideoTrackCallback) {
+          onVideoTrackCallback(user.uid, user.videoTrack)
+        }
       }
 
       if (mediaType === 'audio') {
         const remoteUser = remoteUsers.value.find(u => u.uid === user.uid)
         if (remoteUser) {
           remoteUser.audioTrack = user.audioTrack
+          user.audioTrack.play()
+        } else {
+          remoteUsers.value.push({
+            uid: user.uid,
+            videoTrack: null,
+            audioTrack: user.audioTrack
+          })
+          user.audioTrack.play()
         }
         console.log(`🔊 Playing audio for user ${user.uid}`)
-        user.audioTrack.play()
       }
     } catch (error) {
       console.error('❌ Failed to subscribe to user:', error)
@@ -135,8 +137,14 @@ export function useAgora() {
   }
 
   async function leaveChannel() {
+    // Prevent duplicate calls
+    if (!isJoined.value) {
+      console.log('⚠️ Already left channel')
+      return
+    }
+
     try {
-      // Reset flags
+      // Reset flags immediately
       isReadyForEvents.value = false
       isJoined.value = false
 
@@ -159,9 +167,9 @@ export function useAgora() {
       }
 
       remoteUsers.value = []
-      console.log('Left channel')
+      console.log('✅ Left channel')
     } catch (error) {
-      console.error('Failed to leave channel:', error)
+      console.error('❌ Failed to leave channel:', error)
       throw error
     }
   }
@@ -232,6 +240,11 @@ export function useAgora() {
     }
   }
 
+  // Set callback for when video track is ready
+  function setOnVideoTrack(callback) {
+    onVideoTrackCallback = callback
+  }
+
   // Cleanup on unmount
   onUnmounted(() => {
     leaveChannel()
@@ -251,6 +264,7 @@ export function useAgora() {
     stopPublishing,
     toggleAudio,
     toggleVideo,
-    switchCamera
+    switchCamera,
+    setOnVideoTrack
   }
 }
