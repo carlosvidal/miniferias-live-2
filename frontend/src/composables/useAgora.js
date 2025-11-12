@@ -45,19 +45,13 @@ export function useAgora() {
       client.value = AgoraRTC.createClient({ mode: 'live', codec: 'vp8' })
 
       client.value.on('user-published', async (user, mediaType) => {
-        // Wait until we're fully joined before subscribing
+        // Only handle user-published events AFTER we're fully joined
         if (!isJoined.value) {
-          console.log('Deferring subscription until joined')
-          // Wait for join to complete, then subscribe
-          const checkInterval = setInterval(async () => {
-            if (isJoined.value) {
-              clearInterval(checkInterval)
-              await handleUserPublished(user, mediaType)
-            }
-          }, 100)
+          console.log('⏭️ Ignoring early user-published event (not joined yet)')
           return
         }
 
+        console.log('📢 user-published event:', user.uid, mediaType)
         await handleUserPublished(user, mediaType)
       })
 
