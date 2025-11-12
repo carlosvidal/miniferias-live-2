@@ -19,7 +19,7 @@
     </div>
 
     <!-- Products List -->
-    <div v-else-if="products.length" class="p-4 space-y-3">
+    <div v-else-if="products.length" class="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
       <div v-for="product in products" :key="product.id" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="flex gap-3 p-3">
           <!-- Product Image -->
@@ -81,19 +81,21 @@
     <button
       v-if="myBooth && products.length"
       @click="showCreateModal = true"
-      class="fixed bottom-20 right-4 w-14 h-14 bg-purple-600 text-white rounded-full shadow-lg shadow-purple-500/40 flex items-center justify-center active:scale-95 transition-transform z-30"
+      class="fixed bottom-20 md:bottom-6 right-4 md:right-6 w-14 h-14 md:w-16 md:h-16 bg-purple-600 text-white rounded-full shadow-lg shadow-purple-500/40 flex items-center justify-center active:scale-95 hover:scale-105 transition-transform z-30"
     >
       <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
       </svg>
     </button>
 
-    <!-- Create/Edit Modal - Fullscreen -->
+    <!-- Create/Edit Modal - Fullscreen on mobile, centered on desktop -->
     <Transition name="slide-up">
       <div
         v-if="showCreateModal || showEditModal"
-        class="fixed inset-0 bg-white z-50 flex flex-col"
+        class="fixed inset-0 z-50 flex items-start md:items-center justify-center md:bg-black/50 md:p-4"
       >
+        <div class="w-full h-full md:h-auto md:max-h-[90vh] md:max-w-2xl bg-white md:rounded-2xl md:shadow-2xl flex flex-col overflow-hidden"
+        >
         <!-- Modal Header -->
         <div class="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
           <button @click="closeModal" :disabled="submitting" class="p-2 -ml-2 rounded-lg hover:bg-gray-100">
@@ -209,6 +211,7 @@
           >
             Cancelar
           </button>
+        </div>
         </div>
       </div>
     </Transition>
