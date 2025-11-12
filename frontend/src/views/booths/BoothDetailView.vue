@@ -250,11 +250,43 @@ const {
   remoteUsers,
   isJoined,
   joinChannel,
-  leaveChannel
+  leaveChannel,
+  setOnVideoTrack
 } = useAgora()
 
 const streamStatus = ref('Conectando al stream...')
 const streamError = ref(null)
+
+// Track which videos have been played to avoid multiple play() calls
+const playedVideos = new Set()
+
+// Set up callback for when video tracks are ready
+setOnVideoTrack(async (uid, videoTrack) => {
+  if (playedVideos.has(uid)) {
+    console.log(`⏭️ Video for user ${uid} already played, skipping`)
+    return
+  }
+
+  console.log(`🎥 Video track ready for user ${uid}, waiting for DOM...`)
+  streamStatus.value = 'Stream activo'
+
+  // Wait for Vue to render the DOM element
+  await nextTick()
+
+  const playerElement = document.getElementById(`remote-player-${uid}`)
+  if (playerElement) {
+    console.log(`📺 Playing video for user ${uid}`)
+    try {
+      videoTrack.play(playerElement)
+      playedVideos.add(uid)
+      console.log(`✅ Video playing successfully for user ${uid}`)
+    } catch (error) {
+      console.error(`❌ Failed to play video for user ${uid}:`, error)
+    }
+  } else {
+    console.error(`❌ Player element not found for user ${uid}`)
+  }
+})
 
 // Chat
 const newComment = ref('')
@@ -327,25 +359,6 @@ async function initStream() {
     streamStatus.value = 'Error al conectar'
   }
 }
-
-// Watch for remote users and play their video
-watch(remoteUsers, async (users) => {
-  if (users.length > 0) {
-    streamStatus.value = 'Stream activo'
-    await nextTick()
-
-    users.forEach(user => {
-      if (user.videoTrack) {
-        const playerElement = document.getElementById(`remote-player-${user.uid}`)
-        if (playerElement) {
-          user.videoTrack.play(playerElement)
-        }
-      }
-    })
-  } else if (booth.value?.isStreaming) {
-    streamStatus.value = 'Esperando transmisión...'
-  }
-}, { deep: true })
 
 // Load messages
 async function loadMessages() {
@@ -451,6 +464,8 @@ onUnmounted(async () => {
     clearInterval(messagePollingInterval)
     messagePollingInterval = null
   }
+  // Clear played videos set
+  playedVideos.clear()
 })
 
 function formatPrice(price) {
