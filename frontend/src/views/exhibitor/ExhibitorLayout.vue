@@ -2,8 +2,8 @@
   <!-- Mobile-First Exhibitor Layout -->
   <div class="flex h-screen w-full max-w-2xl mx-auto flex-col overflow-hidden bg-gray-50">
 
-    <!-- Top Header - Minimal (Hidden on Live Stream) -->
-    <header v-if="!isLiveStreamRoute" class="sticky top-0 z-40 bg-white shadow-sm">
+    <!-- Top Header - Minimal (Hidden when streaming) -->
+    <header v-if="!isLiveStreamRoute || !isStreaming" class="sticky top-0 z-40 bg-white shadow-sm">
       <div class="flex items-center justify-between px-4 h-14">
         <!-- Booth Info -->
         <div class="flex items-center gap-3">
@@ -78,8 +78,8 @@
       <RouterView />
     </main>
 
-    <!-- Bottom Navigation Bar (Hidden on Live Stream) -->
-    <nav v-if="!isLiveStreamRoute" class="sticky bottom-0 z-40 bg-white border-t border-gray-200 safe-area-bottom">
+    <!-- Bottom Navigation Bar (Hidden when streaming) -->
+    <nav v-if="!isLiveStreamRoute || !isStreaming" class="sticky bottom-0 z-40 bg-white border-t border-gray-200 safe-area-bottom">
       <div class="grid grid-cols-4 h-16">
         <!-- Dashboard -->
         <router-link
