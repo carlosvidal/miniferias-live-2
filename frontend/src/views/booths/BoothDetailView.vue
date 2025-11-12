@@ -30,7 +30,7 @@
         <div v-if="booth.isStreaming" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Live Stream -->
           <div class="lg:col-span-2">
-            <div class="card">
+            <div class="card relative">
               <div id="video-container" class="aspect-video bg-gray-900 rounded-lg overflow-hidden relative">
                 <!-- Remote Stream (Exhibitor) -->
                 <div v-if="remoteUsers.length > 0" class="w-full h-full">
@@ -64,7 +64,44 @@
                 <div v-if="viewerCount > 0" class="absolute top-4 right-4 px-3 py-1 bg-black bg-opacity-50 text-white rounded-full text-sm flex items-center gap-2">
                   👁️ {{ viewerCount }} {{ viewerCount === 1 ? 'espectador' : 'espectadores' }}
                 </div>
+
+                <!-- Shopping Cart Button (Floating) -->
+                <div v-if="!isBoothMember" class="absolute bottom-4 right-4">
+                  <button
+                    @click="isCartOpen = true"
+                    class="relative flex items-center justify-center rounded-full size-14 bg-purple-600 hover:bg-purple-700 text-white shadow-lg transition-colors"
+                  >
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <span
+                      v-if="cartStore.totalItems > 0"
+                      class="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-xs font-bold text-purple-600 shadow"
+                    >
+                      {{ cartStore.totalItems }}
+                    </span>
+                  </button>
+                </div>
               </div>
+
+              <!-- Added to Cart Notification -->
+              <Transition
+                enter-active-class="transition-all duration-300"
+                leave-active-class="transition-all duration-300"
+                enter-from-class="opacity-0 translate-y-2"
+                leave-to-class="opacity-0 translate-y-2"
+              >
+                <div
+                  v-if="showAddedToCartNotification"
+                  class="absolute top-4 left-1/2 -translate-x-1/2 bg-green-600 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 z-10"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span class="font-medium">Agregado al carrito</span>
+                </div>
+              </Transition>
+            </div>
 
               <!-- Stream Error -->
               <div v-if="streamError" class="mt-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
@@ -137,6 +174,9 @@
         <p>{{ error }}</p>
       </div>
     </main>
+
+    <!-- Shopping Cart Modal -->
+    <ShoppingCart :is-open="isCartOpen" @close="isCartOpen = false" />
   </div>
 </template>
 
@@ -151,6 +191,7 @@ import { useAgora } from '@/composables/useAgora'
 import AppHeader from '@/components/shared/AppHeader.vue'
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
 import BoothChat from '@/components/booths/BoothChat.vue'
+import ShoppingCart from '@/components/booths/ShoppingCart.vue'
 import api from '@/services/api'
 
 const route = useRoute()
@@ -175,6 +216,8 @@ const {
 const streamStatus = ref('Conectando al stream...')
 const streamError = ref(null)
 const viewerCount = ref(0)
+const isCartOpen = ref(false)
+const showAddedToCartNotification = ref(false)
 
 // Load booth and products
 onMounted(async () => {
@@ -262,16 +305,25 @@ function formatPrice(price) {
 }
 
 function addToCart(product) {
-  cartStore.addItem({
-    productId: product.id,
-    name: product.name,
-    price: product.price,
-    imageUrl: product.images?.[0] || '',
-    boothId: booth.value.id,
-    boothName: booth.value.name,
-    quantity: 1
-  })
-  alert(`${product.name} agregado al carrito`)
+  try {
+    cartStore.addItem({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      imageUrl: product.images?.[0] || '',
+      boothId: booth.value.id,
+      boothName: booth.value.name,
+      quantity: 1
+    })
+
+    // Show notification
+    showAddedToCartNotification.value = true
+    setTimeout(() => {
+      showAddedToCartNotification.value = false
+    }, 2000)
+  } catch (err) {
+    alert(err.message)
+  }
 }
 </script>
 
