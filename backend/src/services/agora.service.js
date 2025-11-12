@@ -36,7 +36,7 @@ export function generateAgoraToken(channelName, uid, role = 'audience') {
     token,
     appId,
     uid,
-    channelName,
+    channel: channelName,
     expiresAt: privilegeExpiredTs
   };
 }
