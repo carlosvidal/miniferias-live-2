@@ -149,10 +149,11 @@ const authStore = useAuthStore()
 const boothsStore = useBoothsStore()
 
 const showMenu = ref(false)
-const booth = ref(null)
 const notificationCount = ref(0)
 const pendingOrdersCount = ref(0)
 
+// Use booth directly from store for reactivity
+const booth = computed(() => boothsStore.myBooth)
 const boothName = computed(() => booth.value?.name || 'Mi Booth')
 const boothInitial = computed(() => {
   const name = booth.value?.name || 'B'
@@ -177,7 +178,7 @@ async function handleLogout() {
 
 onMounted(async () => {
   try {
-    booth.value = await boothsStore.fetchMyBooth()
+    await boothsStore.fetchMyBooth()
   } catch (error) {
     console.error('Error loading booth:', error)
   }

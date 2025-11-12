@@ -287,6 +287,8 @@ async function startStream() {
     const { booth: updatedBooth, agora } = response.data
 
     booth.value = updatedBooth
+    // Update store so ExhibitorLayout can react
+    boothsStore.myBooth = updatedBooth
 
     // Join Agora channel as host
     await joinChannel(agora.appId, agora.channel, agora.token, agora.uid, 'host')
@@ -323,6 +325,10 @@ async function stopStream() {
     // Stop streaming on backend
     await api.post(`/booths/${booth.value.id}/stream/stop`)
     booth.value.isStreaming = false
+    // Update store so ExhibitorLayout can react
+    if (boothsStore.myBooth) {
+      boothsStore.myBooth.isStreaming = false
+    }
 
     // Stop duration counter
     if (durationInterval) {
