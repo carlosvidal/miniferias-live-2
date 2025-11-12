@@ -360,10 +360,22 @@ async function loadMessages() {
 
 // Subscribe to real-time messages
 function subscribeToMessages() {
-  realtimeChannel = subscribeToBoothMessages(booth.value.id, async () => {
-    // Reload messages when new one arrives
-    await loadMessages()
-  })
+  try {
+    realtimeChannel = subscribeToBoothMessages(booth.value.id, async () => {
+      // Reload messages when new one arrives
+      await loadMessages()
+    })
+
+    if (!realtimeChannel) {
+      console.warn('Real-time chat not available (Supabase not configured)')
+      // Poll for messages every 5 seconds as fallback
+      setInterval(async () => {
+        await loadMessages()
+      }, 5000)
+    }
+  } catch (error) {
+    console.error('Failed to subscribe to messages:', error)
+  }
 }
 
 // Send comment
