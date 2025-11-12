@@ -13,7 +13,7 @@ export function useAgora() {
   async function handleUserPublished(user, mediaType) {
     try {
       await client.value.subscribe(user, mediaType)
-      console.log(`Subscribed to ${mediaType} from user ${user.uid}`)
+      console.log(`✅ Subscribed to ${mediaType} from user ${user.uid}`)
 
       if (mediaType === 'video') {
         const remoteUser = remoteUsers.value.find(u => u.uid === user.uid)
@@ -26,22 +26,36 @@ export function useAgora() {
             audioTrack: user.audioTrack
           })
         }
+
+        // Try to play video immediately
+        await new Promise(resolve => setTimeout(resolve, 100))
+        const playerElement = document.getElementById(`remote-player-${user.uid}`)
+        if (playerElement && user.videoTrack) {
+          console.log(`🎥 Playing video for user ${user.uid}`)
+          user.videoTrack.play(playerElement)
+        } else {
+          console.log(`⚠️ Player element not found for user ${user.uid}`)
+        }
       }
 
       if (mediaType === 'audio') {
         const remoteUser = remoteUsers.value.find(u => u.uid === user.uid)
         if (remoteUser) {
           remoteUser.audioTrack = user.audioTrack
-          user.audioTrack.play()
         }
+        console.log(`🔊 Playing audio for user ${user.uid}`)
+        user.audioTrack.play()
       }
     } catch (error) {
-      console.error('Failed to subscribe to user:', error)
+      console.error('❌ Failed to subscribe to user:', error)
     }
   }
 
   async function initClient() {
     if (!client.value) {
+      // Set Agora log level to ERROR only to reduce console spam
+      AgoraRTC.setLogLevel(3) // 0: DEBUG, 1: INFO, 2: WARNING, 3: ERROR, 4: NONE
+
       client.value = AgoraRTC.createClient({ mode: 'live', codec: 'vp8' })
 
       client.value.on('user-published', async (user, mediaType) => {
