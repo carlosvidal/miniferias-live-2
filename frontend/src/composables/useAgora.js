@@ -8,6 +8,7 @@ export function useAgora() {
   const remoteUsers = ref([])
   const isJoined = ref(false)
   const isPublishing = ref(false)
+  const isReadyForEvents = ref(false) // New flag to prevent early subscriptions
 
   // Handle user published event with safe subscription
   async function handleUserPublished(user, mediaType) {
@@ -60,9 +61,9 @@ export function useAgora() {
       client.value = AgoraRTC.createClient({ mode: 'live', codec: 'vp8' })
 
       client.value.on('user-published', async (user, mediaType) => {
-        // Only handle user-published events AFTER we're fully joined
-        if (!isJoined.value) {
-          console.log('⏭️ Ignoring early user-published event (not joined yet)')
+        // Only handle user-published events AFTER we're fully ready
+        if (!isReadyForEvents.value) {
+          console.log('⏭️ Ignoring early user-published event (not ready yet)')
           return
         }
 
@@ -122,7 +123,11 @@ export function useAgora() {
         } else {
           console.log('⏳ No remote users yet, waiting for user-published events...')
         }
-      }, 800) // Check after 800ms without blocking
+
+        // Now we're ready to handle new user-published events
+        isReadyForEvents.value = true
+        console.log('✅ Ready for user-published events')
+      }, 1000) // Check after 1s without blocking
     } catch (error) {
       console.error('❌ Failed to join channel:', error)
       throw error
@@ -131,6 +136,10 @@ export function useAgora() {
 
   async function leaveChannel() {
     try {
+      // Reset flags
+      isReadyForEvents.value = false
+      isJoined.value = false
+
       // Stop local tracks
       if (localVideoTrack.value) {
         localVideoTrack.value.stop()
@@ -145,9 +154,8 @@ export function useAgora() {
       }
 
       // Leave channel
-      if (client.value && isJoined.value) {
+      if (client.value) {
         await client.value.leave()
-        isJoined.value = false
       }
 
       remoteUsers.value = []
