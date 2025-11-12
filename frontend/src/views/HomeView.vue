@@ -1,62 +1,114 @@
 <template>
-  <div class="min-h-screen">
-    <AppHeader />
+  <div class="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <!-- Mobile Header with Profile -->
+    <header class="sticky top-0 z-20 bg-white/80 backdrop-blur-lg border-b border-gray-200">
+      <div class="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+        <div>
+          <h1 class="text-xl font-bold text-gray-900">Miniferias</h1>
+          <p class="text-xs text-gray-500">Live Shopping</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <!-- Cart -->
+          <router-link
+            to="/cart"
+            class="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
+          >
+            <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            <span v-if="cartStore.itemCount > 0" class="absolute -top-1 -right-1 bg-pink-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+              {{ cartStore.itemCount }}
+            </span>
+          </router-link>
+          <!-- Profile/Login -->
+          <button
+            v-if="authStore.isAuthenticated"
+            @click="$router.push(authStore.user?.role === 'EXHIBITOR' ? '/exhibitor/dashboard' : '/profile')"
+            class="p-2 rounded-full hover:bg-gray-100 transition-colors"
+          >
+            <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </button>
+          <button
+            v-else
+            @click="$router.push('/login')"
+            class="px-4 py-1.5 bg-pink-600 text-white text-sm font-medium rounded-full hover:bg-pink-700 transition-colors"
+          >
+            Ingresar
+          </button>
+        </div>
+      </div>
+    </header>
 
-    <main class="container mx-auto px-4 py-8">
-      <!-- Hero Section -->
-      <section class="mb-12 text-center">
-        <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-          Bienvenido a Miniferias
-        </h1>
-        <p class="text-xl text-gray-600 mb-8">
-          Descubre eventos virtuales con live shopping en tiempo real
+    <main class="max-w-lg mx-auto px-4 pb-8">
+      <!-- Hero Section - Compact -->
+      <section class="py-6 text-center">
+        <div class="inline-block px-4 py-1 bg-pink-100 text-pink-600 rounded-full text-sm font-medium mb-3">
+          ✨ Descubre eventos virtuales
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">
+          Live Shopping en tiempo real
+        </h2>
+        <p class="text-sm text-gray-600">
+          Compra mientras ves transmisiones en vivo
         </p>
       </section>
 
-      <!-- Filters -->
-      <section class="mb-8 flex flex-wrap gap-4">
-        <button
-          @click="filter = 'all'"
-          :class="[
-            'btn',
-            filter === 'all' ? 'btn-primary' : 'btn-secondary'
-          ]"
-        >
-          Todos
-        </button>
-        <button
-          @click="filter = 'live'"
-          :class="[
-            'btn',
-            filter === 'live' ? 'btn-primary' : 'btn-secondary'
-          ]"
-        >
-          🔴 En Vivo
-        </button>
-        <button
-          @click="filter = 'upcoming'"
-          :class="[
-            'btn',
-            filter === 'upcoming' ? 'btn-primary' : 'btn-secondary'
-          ]"
-        >
-          Próximos
-        </button>
+      <!-- Horizontal Filters with Scroll -->
+      <section class="mb-6 -mx-4 px-4">
+        <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+          <button
+            @click="filter = 'all'"
+            :class="[
+              'px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all flex-shrink-0',
+              filter === 'all'
+                ? 'bg-pink-600 text-white shadow-lg'
+                : 'bg-white text-gray-700 border border-gray-200 hover:border-pink-300'
+            ]"
+          >
+            Todos
+          </button>
+          <button
+            @click="filter = 'live'"
+            :class="[
+              'px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all flex-shrink-0',
+              filter === 'live'
+                ? 'bg-pink-600 text-white shadow-lg'
+                : 'bg-white text-gray-700 border border-gray-200 hover:border-pink-300'
+            ]"
+          >
+            <span class="inline-block w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></span>
+            En Vivo
+          </button>
+          <button
+            @click="filter = 'upcoming'"
+            :class="[
+              'px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all flex-shrink-0',
+              filter === 'upcoming'
+                ? 'bg-pink-600 text-white shadow-lg'
+                : 'bg-white text-gray-700 border border-gray-200 hover:border-pink-300'
+            ]"
+          >
+            📅 Próximos
+          </button>
+        </div>
       </section>
 
       <!-- Loading -->
-      <LoadingSpinner v-if="eventsStore.loading" />
-
-      <!-- Error -->
-      <div v-else-if="eventsStore.error" class="text-center text-red-600 py-8">
-        {{ eventsStore.error }}
+      <div v-if="eventsStore.loading" class="flex justify-center py-12">
+        <LoadingSpinner />
       </div>
 
-      <!-- Events Grid -->
-      <div
-        v-else-if="filteredEvents.length > 0"
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-      >
+      <!-- Error -->
+      <div v-else-if="eventsStore.error" class="text-center py-12">
+        <div class="inline-block p-4 bg-red-50 text-red-600 rounded-2xl">
+          {{ eventsStore.error }}
+        </div>
+      </div>
+
+      <!-- Events List (Vertical Stack for Mobile) -->
+      <div v-else-if="filteredEvents.length > 0" class="space-y-4">
         <EventCard
           v-for="event in filteredEvents"
           :key="event.id"
@@ -65,8 +117,10 @@
       </div>
 
       <!-- Empty State -->
-      <div v-else class="text-center py-12">
-        <p class="text-gray-500 text-lg">No hay eventos disponibles</p>
+      <div v-else class="text-center py-16">
+        <div class="text-6xl mb-4">🎪</div>
+        <p class="text-gray-500 text-lg font-medium mb-2">No hay eventos</p>
+        <p class="text-gray-400 text-sm">Vuelve pronto para ver nuevos eventos</p>
       </div>
     </main>
   </div>
@@ -75,11 +129,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useEventsStore } from '@/stores/events'
-import AppHeader from '@/components/shared/AppHeader.vue'
+import { useAuthStore } from '@/stores/auth'
+import { useCartStore } from '@/stores/cart'
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
 import EventCard from '@/components/events/EventCard.vue'
 
 const eventsStore = useEventsStore()
+const authStore = useAuthStore()
+const cartStore = useCartStore()
 const filter = ref('all')
 
 const filteredEvents = computed(() => {
@@ -98,3 +155,15 @@ onMounted(async () => {
   await eventsStore.fetchEvents()
 })
 </script>
+
+<style scoped>
+/* Hide scrollbar for horizontal scroll */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+</style>

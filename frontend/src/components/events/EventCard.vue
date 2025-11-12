@@ -1,61 +1,67 @@
 <template>
   <router-link
     :to="`/events/${event.slug}`"
-    class="card hover:shadow-lg transition-shadow duration-200 cursor-pointer"
+    class="block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 active:scale-[0.98]"
   >
     <!-- Cover Image -->
-    <div class="relative mb-4">
-      <img
-        v-if="event.coverImage"
-        :src="event.coverImage"
-        :alt="event.name"
-        class="w-full h-48 object-cover rounded-lg"
-      />
-      <div
-        v-else
-        class="w-full h-48 bg-gradient-to-br from-primary-400 to-primary-600 rounded-lg flex items-center justify-center"
-      >
-        <span class="text-6xl">🎪</span>
+    <div class="relative">
+      <div class="aspect-[16/9] overflow-hidden">
+        <img
+          v-if="event.coverImage"
+          :src="event.coverImage"
+          :alt="event.name"
+          class="w-full h-full object-cover"
+        />
+        <div
+          v-else
+          class="w-full h-full bg-gradient-to-br from-pink-400 via-purple-400 to-blue-400 flex items-center justify-center"
+        >
+          <span class="text-7xl">🎪</span>
+        </div>
       </div>
 
-      <!-- Live Badge -->
-      <span
+      <!-- Live Badge - Floating -->
+      <div
         v-if="event.isLive"
-        class="absolute top-3 right-3 badge badge-live"
+        class="absolute top-3 left-3 px-3 py-1.5 bg-red-500 text-white rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg animate-pulse"
       >
-        🔴 EN VIVO
-      </span>
+        <span class="w-2 h-2 bg-white rounded-full"></span>
+        EN VIVO
+      </div>
 
       <!-- Status Badge -->
-      <span
+      <div
         v-else
         :class="[
-          'absolute top-3 right-3 badge',
+          'absolute top-3 left-3 px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg',
           statusBadgeClass
         ]"
       >
         {{ statusText }}
-      </span>
+      </div>
+
+      <!-- Booth Count Badge -->
+      <div class="absolute bottom-3 right-3 px-3 py-1.5 bg-black/50 backdrop-blur-sm text-white rounded-full text-xs font-medium flex items-center gap-1.5">
+        🏪 {{ event._count?.booths || 0 }} booths
+      </div>
     </div>
 
     <!-- Content -->
-    <div>
-      <h3 class="text-xl font-bold text-gray-900 mb-2">
+    <div class="p-4">
+      <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
         {{ event.name }}
       </h3>
 
-      <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+      <p class="text-gray-600 text-sm mb-3 line-clamp-2">
         {{ event.description }}
       </p>
 
-      <div class="flex items-center justify-between text-sm">
-        <div class="text-gray-500">
-          <span>📅 {{ formatDate(event.startDate) }}</span>
-        </div>
-
-        <div class="text-gray-500">
-          <span>🏪 {{ event._count?.booths || 0 }} booths</span>
-        </div>
+      <!-- Date -->
+      <div class="flex items-center gap-2 text-gray-500 text-sm">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span>{{ formatDate(event.startDate) }}</span>
       </div>
     </div>
   </router-link>
@@ -73,12 +79,12 @@ const props = defineProps({
 
 const statusBadgeClass = computed(() => {
   const statusClasses = {
-    DRAFT: 'badge-secondary',
-    SCHEDULED: 'badge-scheduled',
-    LIVE: 'badge-live',
-    ENDED: 'badge-ended'
+    DRAFT: 'bg-gray-200 text-gray-700',
+    SCHEDULED: 'bg-blue-100 text-blue-700',
+    LIVE: 'bg-red-500 text-white',
+    ENDED: 'bg-gray-400 text-white'
   }
-  return statusClasses[props.event.status] || 'badge-secondary'
+  return statusClasses[props.event.status] || 'bg-gray-200 text-gray-700'
 })
 
 const statusText = computed(() => {
@@ -95,8 +101,10 @@ function formatDate(dateString) {
   const date = new Date(dateString)
   return date.toLocaleDateString('es-PE', {
     day: 'numeric',
-    month: 'short',
-    year: 'numeric'
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
   })
 }
 </script>
