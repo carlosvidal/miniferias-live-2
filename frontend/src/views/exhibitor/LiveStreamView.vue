@@ -306,7 +306,7 @@ async function stopStream() {
 async function rejoinStream() {
   try {
     // Get stream token
-    const response = await api.get(`/booths/${booth.value.id}/stream/token`)
+    const response = await api.get(`/booths/${booth.value.id}/stream-token`)
     const { appId, channel, token, uid } = response.data
 
     // Join as host
