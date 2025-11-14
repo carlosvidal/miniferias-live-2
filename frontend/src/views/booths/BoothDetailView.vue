@@ -75,14 +75,14 @@
         <div class="flex items-center justify-end gap-2">
           <!-- Cart Button -->
           <button
-            @click="$router.push('/cart')"
-            class="relative flex cursor-pointer items-center justify-center rounded-full w-10 h-10 bg-black/30 text-white backdrop-blur-sm hover:bg-black/50 transition-colors"
+            @click="showCartModal = true"
+            class="relative flex cursor-pointer items-center justify-center rounded-full w-10 h-10 bg-pink-600 text-white backdrop-blur-sm hover:bg-pink-700 transition-colors"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
-            <span v-if="cartStore.itemCount > 0" class="absolute -top-1 -right-1 bg-pink-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-              {{ cartStore.itemCount }}
+            <span v-if="cartStore.totalItems > 0" class="absolute -top-1 -right-1 bg-white text-pink-600 text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+              {{ cartStore.totalItems }}
             </span>
           </button>
           <!-- Back Button -->
@@ -218,6 +218,9 @@
         </div>
       </div>
     </Transition>
+
+    <!-- Shopping Cart Modal -->
+    <ShoppingCart :is-open="showCartModal" @close="showCartModal = false" />
   </div>
 </template>
 
@@ -231,6 +234,7 @@ import { useCartStore } from '@/stores/cart'
 import { useAgora } from '@/composables/useAgora'
 import { subscribeToBoothMessages } from '@/services/supabase'
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
+import ShoppingCart from '@/components/booths/ShoppingCart.vue'
 import api from '@/services/api'
 
 const route = useRoute()
@@ -303,6 +307,9 @@ const recentMessages = computed(() => {
 const selectedProduct = ref(null)
 const selectedProductIndex = ref(0)
 const showModal = ref(false)
+
+// Shopping cart modal
+const showCartModal = ref(false)
 
 // Load booth and products
 onMounted(async () => {
