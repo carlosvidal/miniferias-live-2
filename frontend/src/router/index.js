@@ -56,7 +56,7 @@ const router = createRouter({
       path: '/checkout',
       name: 'checkout',
       component: () => import('@/views/orders/CheckoutView.vue'),
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: false }
     },
     // Admin routes
     {

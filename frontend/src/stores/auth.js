@@ -105,6 +105,17 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  // Manual setters for guest checkout auto-login
+  function setToken(newToken) {
+    token.value = newToken
+    localStorage.setItem('token', newToken)
+  }
+
+  function setUser(newUser) {
+    user.value = newUser
+    localStorage.setItem('user', JSON.stringify(newUser))
+  }
+
   return {
     user,
     token,
@@ -118,6 +129,8 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     logout,
     fetchUser,
-    updateProfile
+    updateProfile,
+    setToken,
+    setUser
   }
 })
