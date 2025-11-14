@@ -67,7 +67,9 @@ export async function createOrder(req, res) {
     });
 
     // Calculate totals
-    const totals = calculateOrderTotals(orderItems);
+    const subtotal = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
+    const shipping = shippingAddress.deliveryOption === 'delivery' ? 10.00 : 0.00;
+    const total = subtotal + shipping;
 
     // Generate unique order number
     let orderNumber = generateOrderNumber();
@@ -85,9 +87,9 @@ export async function createOrder(req, res) {
         userId: req.user.id,
         boothId,
         shippingAddress,
-        subtotal: totals.subtotal,
-        shipping: totals.shipping,
-        total: totals.total,
+        subtotal,
+        shipping,
+        total,
         paymentMethod,
         paymentProof,
         items: {

@@ -293,39 +293,42 @@ async function handleSubmit() {
   errorMessage.value = ''
 
   try {
-    const orderData = {
-      boothId: cartStore.boothId,
-      items: cartStore.items.map(item => ({
-        productId: item.id,
-        quantity: item.quantity
-      })),
-      contactInfo: {
-        name: form.value.name,
-        email: form.value.email,
-        phone: form.value.phone,
-        address: form.value.address
-      },
-      deliveryOption: deliveryOption.value,
-      shippingCost: shippingCost.value
-    }
-
     let response
 
     if (authStore.isAuthenticated) {
       // Authenticated user - use regular order creation
       response = await api.post('/orders', {
-        ...orderData,
+        boothId: cartStore.boothId,
+        items: cartStore.items.map(item => ({
+          productId: item.id,
+          quantity: item.quantity
+        })),
         shippingAddress: {
           name: form.value.name,
           phone: form.value.phone,
-          address: form.value.address
+          address: form.value.address,
+          deliveryOption: deliveryOption.value
         },
-        paymentMethod: 'pending', // Will be handled in next step
+        paymentMethod: 'pending',
         saveShippingAddress: true
       })
     } else {
       // Guest user - use guest checkout endpoint
-      response = await api.post('/orders/guest-checkout', orderData)
+      response = await api.post('/orders/guest-checkout', {
+        boothId: cartStore.boothId,
+        items: cartStore.items.map(item => ({
+          productId: item.id,
+          quantity: item.quantity
+        })),
+        contactInfo: {
+          name: form.value.name,
+          email: form.value.email,
+          phone: form.value.phone,
+          address: form.value.address
+        },
+        deliveryOption: deliveryOption.value,
+        shippingCost: shippingCost.value
+      })
 
       // Auto-login the user with the returned token
       if (response.data.token) {
@@ -339,8 +342,8 @@ async function handleSubmit() {
     // Clear cart
     cartStore.clear()
 
-    // Navigate to order confirmation
-    router.push(`/orders/${orderId}/confirmation`)
+    // Navigate to thank you page
+    router.push(`/orders/${orderId}/thank-you`)
   } catch (error) {
     console.error('Checkout error:', error)
     errorMessage.value = error.response?.data?.error || 'Error al procesar el pedido. Por favor, intenta nuevamente.'
