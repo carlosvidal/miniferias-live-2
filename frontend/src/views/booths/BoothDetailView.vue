@@ -220,7 +220,25 @@
     </Transition>
 
     <!-- Shopping Cart Modal -->
-    <ShoppingCart :is-open="showCartModal" @close="showCartModal = false" />
+    <ShoppingCart
+      :is-open="showCartModal"
+      @close="showCartModal = false"
+      @open-checkout="openCheckout"
+    />
+
+    <!-- Checkout Overlay -->
+    <CheckoutOverlay
+      :is-open="showCheckoutOverlay"
+      @close="showCheckoutOverlay = false"
+      @checkout-complete="handleCheckoutComplete"
+    />
+
+    <!-- Thank You Overlay -->
+    <ThankYouOverlay
+      :is-open="showThankYouOverlay"
+      :order-id="completedOrderId"
+      @close="closeThankYou"
+    />
   </div>
 </template>
 
@@ -235,6 +253,8 @@ import { useAgora } from '@/composables/useAgora'
 import { subscribeToBoothMessages } from '@/services/supabase'
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
 import ShoppingCart from '@/components/booths/ShoppingCart.vue'
+import CheckoutOverlay from '@/components/booths/CheckoutOverlay.vue'
+import ThankYouOverlay from '@/components/booths/ThankYouOverlay.vue'
 import api from '@/services/api'
 
 const route = useRoute()
@@ -310,6 +330,11 @@ const showModal = ref(false)
 
 // Shopping cart modal
 const showCartModal = ref(false)
+
+// Checkout and thank you overlays
+const showCheckoutOverlay = ref(false)
+const showThankYouOverlay = ref(false)
+const completedOrderId = ref(null)
 
 // Load booth and products
 onMounted(async () => {
@@ -457,6 +482,23 @@ function addToCartFromModal() {
   setTimeout(() => {
     closeProductModal()
   }, 800)
+}
+
+// Overlay functions
+function openCheckout() {
+  showCartModal.value = false
+  showCheckoutOverlay.value = true
+}
+
+function handleCheckoutComplete(orderId) {
+  completedOrderId.value = orderId
+  showCheckoutOverlay.value = false
+  showThankYouOverlay.value = true
+}
+
+function closeThankYou() {
+  showThankYouOverlay.value = false
+  completedOrderId.value = null
 }
 
 // Cleanup on unmount
