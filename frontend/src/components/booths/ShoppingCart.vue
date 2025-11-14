@@ -9,7 +9,7 @@
     >
       <div
         v-if="isOpen"
-        class="fixed inset-0 z-50 flex flex-col justify-end bg-black/50"
+        class="fixed inset-0 z-50 flex flex-col justify-end bg-black/50 pt-28"
         @click.self="emit('close')"
       >
         <Transition
@@ -20,7 +20,7 @@
         >
           <div
             v-if="isOpen"
-            class="flex h-[85vh] flex-col rounded-t-2xl bg-white dark:bg-gray-900 text-gray-800 dark:text-white"
+            class="flex h-full flex-col rounded-t-2xl bg-[#f8f6f7] dark:bg-[#221019] text-gray-800 dark:text-white"
             @click.stop
           >
             <!-- Header -->
@@ -44,7 +44,7 @@
                 <div
                   v-for="item in cartStore.items"
                   :key="item.id"
-                  class="flex items-center gap-4 bg-gray-50 dark:bg-gray-800 rounded-lg p-3"
+                  class="flex items-center gap-4"
                 >
                   <!-- Product Image -->
                   <div
@@ -60,8 +60,11 @@
 
                   <!-- Product Info -->
                   <div class="flex-1 min-w-0">
-                    <p class="font-semibold truncate">{{ item.name }}</p>
-                    <p class="font-bold text-purple-600 dark:text-purple-400 mt-1">
+                    <p class="font-semibold">{{ item.name }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400" v-if="item.variant">
+                      {{ item.variant }}
+                    </p>
+                    <p class="font-bold text-[#ee2b8c] mt-1">
                       S/ {{ formatPrice(item.price) }}
                     </p>
                   </div>
@@ -104,16 +107,16 @@
             </div>
 
             <!-- Footer -->
-            <div v-if="cartStore.items.length > 0" class="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-800">
+            <div v-if="cartStore.items.length > 0" class="border-t border-gray-200 dark:border-gray-700 p-4">
               <div class="flex justify-between font-semibold mb-4">
                 <span>Subtotal</span>
                 <span>S/ {{ formatPrice(cartStore.subtotal) }}</span>
               </div>
               <button
                 @click="goToCheckout"
-                class="w-full rounded-full bg-purple-600 hover:bg-purple-700 py-3.5 text-center font-bold text-white transition-colors"
+                class="w-full rounded-full bg-[#ee2b8c] hover:bg-[#d91f78] py-3.5 text-center font-bold text-white transition-colors"
               >
-                Proceder al Checkout
+                Checkout
               </button>
             </div>
           </div>
