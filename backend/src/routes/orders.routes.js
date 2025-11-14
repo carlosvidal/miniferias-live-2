@@ -4,7 +4,8 @@ import {
   getOrders,
   getOrderById,
   updateOrderStatus,
-  getMyOrders
+  getMyOrders,
+  guestCheckout
 } from '../controllers/orders.controller.js';
 import { authenticate } from '../middleware/auth.middleware.js';
 import { validate } from '../middleware/validate.middleware.js';
@@ -12,7 +13,10 @@ import { createOrderSchema, updateOrderStatusSchema } from '../utils/validators.
 
 const router = express.Router();
 
-// All routes require authentication
+// Guest checkout route (no authentication required)
+router.post('/guest-checkout', guestCheckout);
+
+// Authenticated routes
 router.post('/', authenticate, validate(createOrderSchema), createOrder);
 router.get('/', authenticate, getOrders);
 router.get('/me', authenticate, getMyOrders);

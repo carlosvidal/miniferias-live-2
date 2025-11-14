@@ -1,6 +1,13 @@
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 import prisma from '../config/prisma.js';
 import { generateOrderNumber, calculateOrderTotals } from '../utils/helpers.js';
 import { sendOrderConfirmation, sendOrderStatusUpdate } from '../services/email.service.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export async function createOrder(req, res) {
   try {
@@ -402,5 +409,220 @@ export async function getMyOrders(req, res) {
   } catch (error) {
     console.error('Get my orders error:', error);
     res.status(500).json({ error: 'Failed to get orders' });
+  }
+}
+
+export async function guestCheckout(req, res) {
+  try {
+    const { boothId, items, contactInfo, deliveryOption, shippingCost } = req.body;
+
+    // Validate required fields
+    if (!contactInfo.name || !contactInfo.email || !contactInfo.phone) {
+      return res.status(400).json({ error: 'Name, email, and phone are required' });
+    }
+
+    if (deliveryOption === 'delivery' && !contactInfo.address) {
+      return res.status(400).json({ error: 'Address is required for delivery' });
+    }
+
+    // Verify booth exists
+    const booth = await prisma.booth.findUnique({
+      where: { id: boothId },
+      include: {
+        members: true
+      }
+    });
+
+    if (!booth) {
+      return res.status(404).json({ error: 'Booth not found' });
+    }
+
+    // Check if user exists
+    let user = await prisma.user.findUnique({
+      where: { email: contactInfo.email }
+    });
+
+    let token;
+    let isNewUser = false;
+
+    if (user) {
+      // User exists - verify they're not buying from their own booth
+      const isMember = booth.members.some(member => member.userId === user.id);
+      if (isMember) {
+        return res.status(403).json({
+          error: 'No puedes comprar productos de tu propio booth'
+        });
+      }
+
+      // If user exists but has a different role, don't allow
+      if (user.role !== 'VISITOR') {
+        return res.status(403).json({
+          error: 'Esta cuenta no puede realizar compras. Por favor, inicia sesión o usa otro email.'
+        });
+      }
+
+      // Generate token for existing user
+      token = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      );
+    } else {
+      // Create new user with random password
+      const randomPassword = Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12);
+      const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+      user = await prisma.user.create({
+        data: {
+          email: contactInfo.email,
+          password: hashedPassword,
+          name: contactInfo.name,
+          phone: contactInfo.phone,
+          role: 'VISITOR',
+          shippingAddress: deliveryOption === 'delivery' ? {
+            name: contactInfo.name,
+            phone: contactInfo.phone,
+            address: contactInfo.address
+          } : null
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          phone: true,
+          profilePicture: true,
+          shippingAddress: true,
+          createdAt: true
+        }
+      });
+
+      isNewUser = true;
+
+      // Generate JWT
+      token = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      );
+    }
+
+    // Fetch products and verify stock
+    const productIds = items.map(item => item.productId);
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds }, boothId }
+    });
+
+    if (products.length !== items.length) {
+      return res.status(400).json({ error: 'Some products not found or do not belong to this booth' });
+    }
+
+    // Build order items with product snapshots
+    const orderItems = items.map(item => {
+      const product = products.find(p => p.id === item.productId);
+
+      if (!product) {
+        throw new Error(`Product ${item.productId} not found`);
+      }
+
+      if (product.stock < item.quantity) {
+        throw new Error(`Insufficient stock for ${product.name}`);
+      }
+
+      return {
+        productId: product.id,
+        quantity: item.quantity,
+        unitPrice: product.price,
+        subtotal: parseFloat(product.price) * item.quantity,
+        productName: product.name,
+        productImage: product.images[0] || null
+      };
+    });
+
+    // Calculate totals
+    const subtotal = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
+    const shipping = shippingCost || 0;
+    const total = subtotal + shipping;
+
+    // Generate unique order number
+    let orderNumber = generateOrderNumber();
+    let orderExists = await prisma.order.findUnique({ where: { orderNumber } });
+
+    while (orderExists) {
+      orderNumber = generateOrderNumber();
+      orderExists = await prisma.order.findUnique({ where: { orderNumber } });
+    }
+
+    // Create order with items
+    const order = await prisma.order.create({
+      data: {
+        orderNumber,
+        userId: user.id,
+        boothId,
+        shippingAddress: {
+          name: contactInfo.name,
+          phone: contactInfo.phone,
+          address: contactInfo.address || '',
+          deliveryOption: deliveryOption
+        },
+        subtotal,
+        shipping,
+        total,
+        paymentMethod: 'pending', // Will be updated in payment step
+        status: 'PENDING',
+        items: {
+          create: orderItems
+        }
+      },
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        },
+        booth: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
+    });
+
+    // Update product stock
+    for (const item of items) {
+      await prisma.product.update({
+        where: { id: item.productId },
+        data: {
+          stock: {
+            decrement: item.quantity
+          }
+        }
+      });
+    }
+
+    // Send confirmation email
+    try {
+      await sendOrderConfirmation(order, user);
+    } catch (emailError) {
+      console.error('Failed to send order confirmation email:', emailError);
+    }
+
+    // Return user without password
+    const { password: _, ...userWithoutPassword } = user;
+
+    res.status(201).json({
+      message: isNewUser ? 'User created and order placed successfully' : 'Order created successfully',
+      order,
+      user: userWithoutPassword,
+      token,
+      isNewUser
+    });
+  } catch (error) {
+    console.error('Guest checkout error:', error);
+    res.status(500).json({
+      error: 'Failed to process checkout',
+      details: error.message
+    });
   }
 }
