@@ -301,7 +301,7 @@ onMounted(async () => {
   try {
     loading.value = true
     const response = await authAPI.getMe()
-    const user = response.data.user
+    const user = response.data // El backend retorna el usuario directamente
 
     form.value = {
       name: user.name,
@@ -345,13 +345,26 @@ const getRoleLabel = (role) => {
   return labels[role] || role
 }
 
-const handleAvatarUploaded = (result) => {
+const handleAvatarUploaded = async (result) => {
   console.log('Avatar subido:', result)
-  successMessage.value = 'Foto de perfil actualizada'
-  showUploadAvatar.value = false
+
+  try {
+    // Guardar el avatar en la base de datos inmediatamente
+    await authAPI.updateProfile({ profilePicture: result.url })
+
+    // Actualizar el formulario local
+    form.value.profilePicture = result.url
+
+    successMessage.value = 'Foto de perfil actualizada'
+    showUploadAvatar.value = false
+  } catch (error) {
+    console.error('Error guardando avatar:', error)
+    errorMessage.value = 'Error al guardar la foto de perfil'
+  }
 
   setTimeout(() => {
     successMessage.value = ''
+    errorMessage.value = ''
   }, 3000)
 }
 
