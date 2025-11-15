@@ -31,7 +31,7 @@ export const IMAGE_TYPES = {
   PRODUCT: {
     type: 'product',
     aspectRatio: '1:1',
-    variant: 'product',
+    variant: 'medium', // Usando variant 'medium' 720x720 existente
     description: 'Product image - cuadrada'
   },
   PAYMENT_PROOF: {
@@ -100,9 +100,13 @@ export async function uploadImage(fileBuffer, fileName, imageType = IMAGE_TYPES.
         public: getImageUrl(imageId, 'public'),
         avatar: getImageUrl(imageId, 'avatar'),
         logo: getImageUrl(imageId, 'logo'),
-        product: getImageUrl(imageId, 'product'),
         cover: getImageUrl(imageId, 'cover'),
-        thumbnail: getImageUrl(imageId, 'thumbnail')
+        // Variantes adicionales disponibles
+        small: getImageUrl(imageId, 'small'),
+        medium: getImageUrl(imageId, 'medium'),
+        large: getImageUrl(imageId, 'large'),
+        xlarge: getImageUrl(imageId, 'xlarge'),
+        micro: getImageUrl(imageId, 'micro')
       },
       metadata: fullMetadata,
       uploadedAt: result.result.uploaded
