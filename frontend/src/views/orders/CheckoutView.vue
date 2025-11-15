@@ -1,10 +1,10 @@
 <template>
-  <div class="relative flex h-[100dvh] w-full max-w-lg mx-auto flex-col overflow-hidden bg-background-light dark:bg-background-dark text-gray-800 dark:text-white">
+  <div class="relative flex h-[100dvh] w-full max-w-lg mx-auto flex-col overflow-hidden bg-[#f8f6f7] dark:bg-[#221019] text-gray-900 dark:text-white">
     <!-- Header -->
     <header class="flex items-center p-4 border-b border-gray-200 dark:border-gray-700">
       <button
         @click="goBack"
-        class="flex items-center justify-center size-10 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+        class="flex items-center justify-center size-10 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -15,28 +15,30 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 overflow-y-auto p-4">
+    <main class="flex-1 overflow-y-auto">
       <!-- Empty Cart -->
-      <div v-if="cartStore.items.length === 0" class="flex flex-col items-center justify-center h-full">
-        <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div v-if="cartStore.items.length === 0" class="flex flex-col items-center justify-center h-full p-4">
+        <svg class="w-16 h-16 text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
         </svg>
         <p class="text-gray-600 dark:text-gray-400 mb-4">Tu carrito está vacío</p>
-        <button @click="$router.push('/')" class="px-6 py-2 bg-primary text-white rounded-full font-semibold">
+        <button @click="$router.push('/')" class="px-6 py-2 bg-[#ee2b8c] text-white rounded-full font-semibold hover:bg-pink-600 transition-colors">
           Ver Eventos
         </button>
       </div>
 
       <!-- Checkout Form -->
-      <div v-else class="space-y-6">
-        <!-- Cart Summary -->
-        <div>
+      <div v-else class="p-4 space-y-6">
+        <!-- Order Summary -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
           <h2 class="text-base font-semibold mb-3">Resumen del pedido</h2>
-          <div class="space-y-3">
+
+          <!-- Cart Items -->
+          <div class="space-y-3 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
             <div
               v-for="item in cartStore.items"
               :key="item.id"
-              class="flex gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg"
+              class="flex gap-3"
             >
               <img
                 v-if="item.image"
@@ -45,10 +47,26 @@
                 class="w-16 h-16 object-cover rounded-lg"
               />
               <div class="flex-1">
-                <h3 class="font-medium text-sm">{{ item.name }}</h3>
+                <h3 class="font-medium text-sm text-gray-900 dark:text-white">{{ item.name }}</h3>
                 <p class="text-xs text-gray-500 dark:text-gray-400">Cantidad: {{ item.quantity }}</p>
-                <p class="text-primary font-semibold">S/ {{ formatPrice(item.price * item.quantity) }}</p>
+                <p class="text-[#ee2b8c] font-semibold">S/ {{ formatPrice(item.price * item.quantity) }}</p>
               </div>
+            </div>
+          </div>
+
+          <!-- Totals -->
+          <div class="space-y-2">
+            <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+              <span>Subtotal ({{ cartStore.totalItems }} items)</span>
+              <span>S/ {{ formatPrice(cartStore.subtotal) }}</span>
+            </div>
+            <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+              <span>Envío</span>
+              <span>S/ {{ formatPrice(shippingCost) }}</span>
+            </div>
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-2 flex justify-between text-lg font-bold">
+              <span class="text-gray-900 dark:text-white">Total</span>
+              <span class="text-[#ee2b8c]">S/ {{ formatPrice(totalWithShipping) }}</span>
             </div>
           </div>
         </div>
@@ -58,37 +76,37 @@
           <h2 class="text-base font-semibold mb-3">Opciones de entrega</h2>
           <div class="space-y-3">
             <label
-              class="flex items-center p-4 border rounded-lg cursor-pointer transition-all"
+              class="flex items-center p-4 border rounded-lg cursor-pointer transition-all bg-white dark:bg-gray-800"
               :class="deliveryOption === 'pickup'
-                ? 'border-primary ring-2 ring-primary bg-pink-50 dark:bg-pink-900/20'
+                ? 'border-[#ee2b8c] ring-2 ring-[#ee2b8c] bg-pink-50 dark:bg-pink-900/20'
                 : 'border-gray-300 dark:border-gray-600'"
             >
               <div class="flex-1">
-                <p class="font-semibold">Recoger (Gratis)</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Recoge tu pedido en la tienda.</p>
+                <p class="font-semibold text-gray-900 dark:text-white">Recoger (Gratis)</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Recoge tu pedido en la tienda.</p>
               </div>
               <input
                 v-model="deliveryOption"
                 type="radio"
                 value="pickup"
-                class="form-radio h-5 w-5 text-primary focus:ring-primary"
+                class="form-radio h-5 w-5 text-[#ee2b8c] focus:ring-[#ee2b8c] border-gray-300 dark:border-gray-600"
               />
             </label>
             <label
-              class="flex items-center p-4 border rounded-lg cursor-pointer transition-all"
+              class="flex items-center p-4 border rounded-lg cursor-pointer transition-all bg-white dark:bg-gray-800"
               :class="deliveryOption === 'delivery'
-                ? 'border-primary ring-2 ring-primary bg-pink-50 dark:bg-pink-900/20'
+                ? 'border-[#ee2b8c] ring-2 ring-[#ee2b8c] bg-pink-50 dark:bg-pink-900/20'
                 : 'border-gray-300 dark:border-gray-600'"
             >
               <div class="flex-1">
-                <p class="font-semibold">Recibir (+ S/ 10.00)</p>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Recibe tu pedido en tu dirección.</p>
+                <p class="font-semibold text-gray-900 dark:text-white">Recibir (+ S/ 10.00)</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Recibe tu pedido en tu dirección.</p>
               </div>
               <input
                 v-model="deliveryOption"
                 type="radio"
                 value="delivery"
-                class="form-radio h-5 w-5 text-primary focus:ring-primary"
+                class="form-radio h-5 w-5 text-[#ee2b8c] focus:ring-[#ee2b8c] border-gray-300 dark:border-gray-600"
               />
             </label>
           </div>
@@ -108,7 +126,7 @@
                 type="text"
                 required
                 placeholder="Ingresa tu nombre completo"
-                class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-background-light dark:bg-gray-800 focus:border-primary focus:ring-primary text-gray-800 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-[#ee2b8c] focus:ring-2 focus:ring-[#ee2b8c] focus:ring-opacity-50 transition-colors"
               />
             </div>
 
@@ -123,7 +141,7 @@
                 required
                 :disabled="authStore.isAuthenticated"
                 placeholder="Ingresa tu correo electrónico"
-                class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-background-light dark:bg-gray-800 focus:border-primary focus:ring-primary text-gray-800 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-[#ee2b8c] focus:ring-2 focus:ring-[#ee2b8c] focus:ring-opacity-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-900"
               />
               <p v-if="authStore.isAuthenticated" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Email de tu cuenta actual
@@ -135,7 +153,7 @@
                 Teléfono
               </label>
               <div class="relative">
-                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
                   <span class="text-gray-500 dark:text-gray-400">+51</span>
                 </div>
                 <input
@@ -146,7 +164,7 @@
                   required
                   placeholder="987 654 321"
                   title="El número de teléfono debe tener 9 dígitos."
-                  class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-background-light dark:bg-gray-800 focus:border-primary focus:ring-primary pl-12 text-gray-800 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  class="w-full px-4 py-2.5 pl-14 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-[#ee2b8c] focus:ring-2 focus:ring-[#ee2b8c] focus:ring-opacity-50 transition-colors"
                 />
               </div>
             </div>
@@ -161,7 +179,7 @@
                 type="text"
                 :required="deliveryOption === 'delivery'"
                 placeholder="Ingresa tu dirección"
-                class="w-full rounded-lg border-gray-300 dark:border-gray-600 bg-background-light dark:bg-gray-800 focus:border-primary focus:ring-primary text-gray-800 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                class="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-[#ee2b8c] focus:ring-2 focus:ring-[#ee2b8c] focus:ring-opacity-50 transition-colors"
               />
               <p v-if="deliveryOption === 'pickup'" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Opcional para recojo en tienda
@@ -170,46 +188,44 @@
           </div>
         </div>
 
-        <!-- Order Total -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-4">
-          <div class="space-y-2">
-            <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-              <span>Subtotal ({{ cartStore.totalItems }} items)</span>
-              <span>S/ {{ formatPrice(cartStore.subtotal) }}</span>
-            </div>
-            <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-              <span>Envío</span>
-              <span>S/ {{ formatPrice(shippingCost) }}</span>
-            </div>
-            <div class="border-t border-gray-200 dark:border-gray-700 pt-2 flex justify-between text-lg font-bold">
-              <span>Total</span>
-              <span class="text-primary">S/ {{ formatPrice(totalWithShipping) }}</span>
-            </div>
-          </div>
+        <!-- Terms and Conditions -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+          <label class="flex items-start gap-3 cursor-pointer">
+            <input
+              v-model="acceptedTerms"
+              type="checkbox"
+              class="form-checkbox h-5 w-5 text-[#ee2b8c] rounded border-gray-300 dark:border-gray-600 focus:ring-[#ee2b8c] focus:ring-2 focus:ring-opacity-50 mt-0.5"
+            />
+            <span class="text-sm text-gray-700 dark:text-gray-300">
+              Acepto los
+              <a href="#" @click.prevent class="text-[#ee2b8c] hover:underline">términos y condiciones</a>
+              y la
+              <a href="#" @click.prevent class="text-[#ee2b8c] hover:underline">política de privacidad</a>
+            </span>
+          </label>
+          <p v-if="!authStore.isAuthenticated" class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Se creará una cuenta automáticamente con tu email
+          </p>
         </div>
+
+        <!-- Error Message -->
+        <div v-if="errorMessage" class="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm border border-red-200 dark:border-red-800">
+          {{ errorMessage }}
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          @click="handleSubmit"
+          :disabled="!canSubmit || submitting"
+          class="w-full rounded-full bg-[#ee2b8c] py-3.5 text-center font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-pink-600 transition-colors"
+        >
+          {{ submitting ? 'Procesando...' : 'Confirmar Pedido' }}
+        </button>
+
+        <!-- Bottom padding for safe area -->
+        <div class="h-4"></div>
       </div>
     </main>
-
-    <!-- Footer -->
-    <footer v-if="cartStore.items.length > 0" class="p-4 border-t border-gray-200 dark:border-gray-700 bg-background-light dark:bg-background-dark">
-      <button
-        @click="handleSubmit"
-        :disabled="!canSubmit || submitting"
-        class="w-full rounded-full bg-primary py-3.5 text-center font-bold text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-pink-600 transition-colors"
-      >
-        {{ submitting ? 'Procesando...' : 'Enviar' }}
-      </button>
-
-      <!-- Error Message -->
-      <div v-if="errorMessage" class="mt-3 p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm">
-        {{ errorMessage }}
-      </div>
-
-      <!-- Success for guest users -->
-      <p v-if="!authStore.isAuthenticated" class="text-xs text-center text-gray-500 dark:text-gray-400 mt-3">
-        Se creará una cuenta automáticamente con tu email
-      </p>
-    </footer>
   </div>
 </template>
 
@@ -232,6 +248,7 @@ const form = ref({
   address: ''
 })
 
+const acceptedTerms = ref(false)
 const submitting = ref(false)
 const errorMessage = ref('')
 
@@ -247,7 +264,7 @@ const totalWithShipping = computed(() => {
 const canSubmit = computed(() => {
   const basicFields = form.value.name && form.value.email && form.value.phone
   const addressRequired = deliveryOption.value === 'delivery' ? form.value.address : true
-  return basicFields && addressRequired
+  return basicFields && addressRequired && acceptedTerms.value
 })
 
 // Load user data if authenticated
@@ -276,39 +293,42 @@ async function handleSubmit() {
   errorMessage.value = ''
 
   try {
-    const orderData = {
-      boothId: cartStore.boothId,
-      items: cartStore.items.map(item => ({
-        productId: item.id,
-        quantity: item.quantity
-      })),
-      contactInfo: {
-        name: form.value.name,
-        email: form.value.email,
-        phone: form.value.phone,
-        address: form.value.address
-      },
-      deliveryOption: deliveryOption.value,
-      shippingCost: shippingCost.value
-    }
-
     let response
 
     if (authStore.isAuthenticated) {
       // Authenticated user - use regular order creation
       response = await api.post('/orders', {
-        ...orderData,
+        boothId: cartStore.boothId,
+        items: cartStore.items.map(item => ({
+          productId: item.id,
+          quantity: item.quantity
+        })),
         shippingAddress: {
           name: form.value.name,
           phone: form.value.phone,
-          address: form.value.address
+          address: form.value.address,
+          deliveryOption: deliveryOption.value
         },
-        paymentMethod: 'pending', // Will be handled in next step
+        paymentMethod: 'pending',
         saveShippingAddress: true
       })
     } else {
       // Guest user - use guest checkout endpoint
-      response = await api.post('/orders/guest-checkout', orderData)
+      response = await api.post('/orders/guest-checkout', {
+        boothId: cartStore.boothId,
+        items: cartStore.items.map(item => ({
+          productId: item.id,
+          quantity: item.quantity
+        })),
+        contactInfo: {
+          name: form.value.name,
+          email: form.value.email,
+          phone: form.value.phone,
+          address: form.value.address
+        },
+        deliveryOption: deliveryOption.value,
+        shippingCost: shippingCost.value
+      })
 
       // Auto-login the user with the returned token
       if (response.data.token) {
@@ -322,8 +342,8 @@ async function handleSubmit() {
     // Clear cart
     cartStore.clear()
 
-    // Navigate to order confirmation
-    router.push(`/orders/${orderId}/confirmation`)
+    // Navigate to thank you page
+    router.push(`/orders/${orderId}/thank-you`)
   } catch (error) {
     console.error('Checkout error:', error)
     errorMessage.value = error.response?.data?.error || 'Error al procesar el pedido. Por favor, intenta nuevamente.'
@@ -339,44 +359,3 @@ function formatPrice(price) {
   }).format(price)
 }
 </script>
-
-<style scoped>
-/* Ensure dark mode variables are available */
-:root {
-  --color-primary: #ee2b8c;
-  --color-background-light: #f8f6f7;
-  --color-background-dark: #121212;
-}
-
-.bg-background-light {
-  background-color: var(--color-background-light);
-}
-
-.dark .bg-background-dark {
-  background-color: var(--color-background-dark);
-}
-
-.bg-primary {
-  background-color: var(--color-primary);
-}
-
-.text-primary {
-  color: var(--color-primary);
-}
-
-.border-primary {
-  border-color: var(--color-primary);
-}
-
-.ring-primary {
-  --tw-ring-color: var(--color-primary);
-}
-
-.focus\:border-primary:focus {
-  border-color: var(--color-primary);
-}
-
-.focus\:ring-primary:focus {
-  --tw-ring-color: var(--color-primary);
-}
-</style>

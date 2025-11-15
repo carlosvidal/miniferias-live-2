@@ -137,10 +137,9 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'open-checkout'])
 
 const cartStore = useCartStore()
-const router = useRouter()
 
 function formatPrice(price) {
   return new Intl.NumberFormat('es-PE', {
@@ -166,6 +165,6 @@ function decrementQuantity(item) {
 
 function goToCheckout() {
   emit('close')
-  router.push('/checkout')
+  emit('open-checkout')
 }
 </script>

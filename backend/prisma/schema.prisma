@@ -93,6 +93,8 @@ model Booth {
   yapeQR          String?   // URL to QR image
   plinNumber      String?
   plinQR          String?   // URL to QR image
+  bankAccount     String?   // Bank account number
+  cci             String?   // Código de Cuenta Interbancaria
 
   // Agora streaming
   isStreaming     Boolean   @default(false)

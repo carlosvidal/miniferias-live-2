@@ -99,12 +99,13 @@ export const createOrderSchema = Joi.object({
   shippingAddress: Joi.object({
     name: Joi.string().required(),
     phone: Joi.string().pattern(/^9\d{8}$/).required(),
-    address: Joi.string().required(),
-    city: Joi.string().required(),
-    district: Joi.string().required(),
-    reference: Joi.string().optional()
+    address: Joi.string().allow('').optional(),
+    city: Joi.string().optional(),
+    district: Joi.string().optional(),
+    reference: Joi.string().optional(),
+    deliveryOption: Joi.string().valid('pickup', 'delivery').optional()
   }).required(),
-  paymentMethod: Joi.string().valid('yape', 'plin', 'other').required(),
+  paymentMethod: Joi.string().valid('yape', 'plin', 'other', 'pending').required(),
   paymentProof: Joi.string().uri().optional(),
   saveShippingAddress: Joi.boolean().default(false)
 });
