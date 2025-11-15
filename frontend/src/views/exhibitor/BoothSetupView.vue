@@ -20,12 +20,26 @@
     <div v-else-if="booth" class="space-y-6">
       <!-- Booth Info Card -->
       <div class="card">
-        <div class="flex items-start justify-between mb-6">
-          <div>
+        <div class="flex items-start gap-6 mb-6">
+          <!-- Logo -->
+          <div class="flex-shrink-0">
+            <img
+              v-if="booth.logo"
+              :src="getImageUrl(booth.logo, 'logo')"
+              :alt="booth.name"
+              class="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+            />
+            <div v-else class="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-2xl">
+              {{ booth.name.charAt(0).toUpperCase() }}
+            </div>
+          </div>
+
+          <div class="flex-1">
             <h2 class="text-2xl font-semibold mb-2">{{ booth.name }}</h2>
             <p class="text-gray-600">{{ booth.description }}</p>
           </div>
-          <button @click="editMode = true" class="btn btn-primary">
+
+          <button @click="openEditModal" class="btn btn-primary">
             Editar Información
           </button>
         </div>
@@ -35,7 +49,7 @@
           <div class="md:col-span-3">
             <label class="block text-sm font-medium text-gray-700 mb-2">Banner del Booth</label>
             <div v-if="booth.bannerUrl" class="aspect-video bg-gray-100 rounded-lg overflow-hidden">
-              <img :src="booth.bannerUrl" :alt="booth.name" class="w-full h-full object-cover" />
+              <img :src="getImageUrl(booth.bannerUrl, 'cover')" :alt="booth.name" class="w-full h-full object-cover" />
             </div>
             <div v-else class="aspect-video bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center text-white">
               <svg class="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -172,10 +186,15 @@
           <form @submit.prevent="handleUpdatePayment" class="space-y-6">
             <!-- Yape Section -->
             <div class="border rounded-lg p-4">
-              <h3 class="font-semibold mb-4">Yape</h3>
+              <h3 class="font-semibold mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                </svg>
+                Yape
+              </h3>
               <div class="space-y-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
                     Número de Yape
                   </label>
                   <input
@@ -187,28 +206,32 @@
                 </div>
 
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
-                    URL del QR de Yape
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    QR de Yape
                   </label>
-                  <input
-                    v-model="paymentForm.yapeQR"
-                    type="url"
-                    class="input"
-                    placeholder="https://ejemplo.com/yape-qr.jpg"
-                  />
-                  <p class="text-xs text-gray-500 mt-1">
-                    Sube tu imagen de QR a un servicio como Imgur y pega el enlace aquí
+                  <p class="text-xs text-gray-500 mb-3">
+                    Sube una captura del código QR de Yape
                   </p>
+                  <ImageUpload
+                    type="paymentProof"
+                    v-model="paymentForm.yapeQR"
+                    alt="QR de Yape"
+                  />
                 </div>
               </div>
             </div>
 
             <!-- Plin Section -->
             <div class="border rounded-lg p-4">
-              <h3 class="font-semibold mb-4">Plin</h3>
+              <h3 class="font-semibold mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                </svg>
+                Plin
+              </h3>
               <div class="space-y-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
                     Número de Plin
                   </label>
                   <input
@@ -220,20 +243,27 @@
                 </div>
 
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">
-                    URL del QR de Plin
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    QR de Plin
                   </label>
-                  <input
-                    v-model="paymentForm.plinQR"
-                    type="url"
-                    class="input"
-                    placeholder="https://ejemplo.com/plin-qr.jpg"
-                  />
-                  <p class="text-xs text-gray-500 mt-1">
-                    Sube tu imagen de QR a un servicio como Imgur y pega el enlace aquí
+                  <p class="text-xs text-gray-500 mb-3">
+                    Sube una captura del código QR de Plin
                   </p>
+                  <ImageUpload
+                    type="paymentProof"
+                    v-model="paymentForm.plinQR"
+                    alt="QR de Plin"
+                  />
                 </div>
               </div>
+            </div>
+
+            <!-- Success Message -->
+            <div v-if="paymentSuccessMessage" class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+              {{ paymentSuccessMessage }}
             </div>
 
             <!-- Error Message -->
@@ -274,10 +304,45 @@
         <div class="p-6">
           <h2 class="text-2xl font-bold mb-6">Editar Booth</h2>
 
-          <form @submit.prevent="handleUpdate" class="space-y-4">
+          <form @submit.prevent="handleUpdate" class="space-y-6">
+            <!-- Logo Upload -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Logo del Booth
+              </label>
+              <p class="text-xs text-gray-500 mb-3">
+                El logo se mostrará circular. Sube una imagen cuadrada para mejores resultados.
+              </p>
+              <ImageUpload
+                type="logo"
+                v-model="form.logo"
+                :entity-id="booth.id"
+                alt="Logo del booth"
+                @uploaded="handleLogoUploaded"
+              />
+            </div>
+
+            <!-- Banner Upload -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Banner del Booth
+              </label>
+              <p class="text-xs text-gray-500 mb-3">
+                Imagen de portada en formato 16:9 (1280x720px recomendado)
+              </p>
+              <ImageUpload
+                type="cover"
+                entity-type="booth"
+                :entity-id="booth.id"
+                v-model="form.bannerUrl"
+                alt="Banner del booth"
+                @uploaded="handleBannerUploaded"
+              />
+            </div>
+
             <!-- Name -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
+              <label class="block text-sm font-medium text-gray-700 mb-2">
                 Nombre del Booth *
               </label>
               <input
@@ -291,7 +356,7 @@
 
             <!-- Description -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
+              <label class="block text-sm font-medium text-gray-700 mb-2">
                 Descripción *
               </label>
               <textarea
@@ -303,20 +368,12 @@
               ></textarea>
             </div>
 
-            <!-- Banner URL -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                URL del Banner
-              </label>
-              <input
-                v-model="form.bannerUrl"
-                type="url"
-                class="input"
-                placeholder="https://ejemplo.com/banner.jpg"
-              />
-              <p class="text-xs text-gray-500 mt-1">
-                Puedes subir tu imagen a Imgur, Cloudinary u otro servicio y pegar el enlace aquí
-              </p>
+            <!-- Success Message -->
+            <div v-if="successMessage" class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+              {{ successMessage }}
             </div>
 
             <!-- Error Message -->
@@ -359,8 +416,11 @@
 import { ref, onMounted } from 'vue'
 import { useBoothsStore } from '@/stores/booths'
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
+import ImageUpload from '@/components/shared/ImageUpload.vue'
+import { useImageUpload } from '@/composables/useImageUpload'
 
 const boothsStore = useBoothsStore()
+const { getImageUrl: getCloudflareImageUrl } = useImageUpload()
 
 const loading = ref(true)
 const error = ref(null)
@@ -368,16 +428,19 @@ const booth = ref(null)
 const editMode = ref(false)
 const updating = ref(false)
 const errorMessage = ref('')
+const successMessage = ref('')
 
 const form = ref({
   name: '',
   description: '',
+  logo: '',
   bannerUrl: ''
 })
 
 const editPaymentMode = ref(false)
 const updatingPayment = ref(false)
 const paymentErrorMessage = ref('')
+const paymentSuccessMessage = ref('')
 
 const paymentForm = ref({
   yapeNumber: '',
@@ -404,13 +467,29 @@ async function loadBooth() {
   }
 }
 
+// Helper to get image URL with correct variant
+function getImageUrl(imageUrl, variant = 'public') {
+  if (!imageUrl) return null
+  // Si ya es una URL de Cloudflare, extraer el ID y usar el variant correcto
+  if (imageUrl.includes('imagedelivery.net')) {
+    const matches = imageUrl.match(/imagedelivery\.net\/[^\/]+\/([^\/]+)/)
+    if (matches && matches[1]) {
+      return getCloudflareImageUrl(matches[1], variant)
+    }
+  }
+  return imageUrl
+}
+
 function openEditModal() {
   form.value = {
     name: booth.value.name,
     description: booth.value.description,
+    logo: booth.value.logo || '',
     bannerUrl: booth.value.bannerUrl || ''
   }
   editMode.value = true
+  errorMessage.value = ''
+  successMessage.value = ''
 }
 
 function closeEditModal() {
@@ -418,25 +497,50 @@ function closeEditModal() {
   form.value = {
     name: '',
     description: '',
+    logo: '',
     bannerUrl: ''
   }
   errorMessage.value = ''
+  successMessage.value = ''
+}
+
+function handleLogoUploaded(result) {
+  console.log('Logo subido:', result)
+  successMessage.value = 'Logo actualizado correctamente'
+  setTimeout(() => {
+    successMessage.value = ''
+  }, 3000)
+}
+
+function handleBannerUploaded(result) {
+  console.log('Banner subido:', result)
+  successMessage.value = 'Banner actualizado correctamente'
+  setTimeout(() => {
+    successMessage.value = ''
+  }, 3000)
 }
 
 async function handleUpdate() {
   updating.value = true
   errorMessage.value = ''
+  successMessage.value = ''
 
   try {
     const data = {
       name: form.value.name,
       description: form.value.description,
+      logo: form.value.logo || null,
       bannerUrl: form.value.bannerUrl || null
     }
 
     await boothsStore.updateBooth(booth.value.id, data)
     await loadBooth()
-    closeEditModal()
+
+    successMessage.value = 'Booth actualizado correctamente'
+
+    setTimeout(() => {
+      closeEditModal()
+    }, 1500)
   } catch (err) {
     errorMessage.value = err.response?.data?.error || 'Error al actualizar el booth'
   } finally {
@@ -452,6 +556,8 @@ function openPaymentEditModal() {
     plinQR: booth.value.plinQR || ''
   }
   editPaymentMode.value = true
+  paymentErrorMessage.value = ''
+  paymentSuccessMessage.value = ''
 }
 
 function closePaymentEditModal() {
@@ -463,11 +569,13 @@ function closePaymentEditModal() {
     plinQR: ''
   }
   paymentErrorMessage.value = ''
+  paymentSuccessMessage.value = ''
 }
 
 async function handleUpdatePayment() {
   updatingPayment.value = true
   paymentErrorMessage.value = ''
+  paymentSuccessMessage.value = ''
 
   try {
     const data = {
@@ -479,7 +587,12 @@ async function handleUpdatePayment() {
 
     await boothsStore.updateBooth(booth.value.id, data)
     await loadBooth()
-    closePaymentEditModal()
+
+    paymentSuccessMessage.value = 'Métodos de pago actualizados correctamente'
+
+    setTimeout(() => {
+      closePaymentEditModal()
+    }, 1500)
   } catch (err) {
     paymentErrorMessage.value = err.response?.data?.error || 'Error al actualizar los métodos de pago'
   } finally {
