@@ -109,3 +109,115 @@ export const usersAPI = {
   updateRole: (id, role) => api.patch(`/users/${id}/role`, { role }),
   delete: (id) => api.delete(`/users/${id}`)
 }
+
+// Upload API (Cloudflare Images)
+export const uploadAPI = {
+  /**
+   * Upload avatar (profile picture) - cuadrada, se muestra circular
+   * @param {File} file - Archivo de imagen
+   * @returns {Promise} - Promesa con la URL de la imagen
+   */
+  uploadAvatar: (file) => {
+    const formData = new FormData()
+    formData.append('avatar', file)
+    return api.post('/upload/avatar', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+
+  /**
+   * Upload logo de expositor - cuadrada
+   * @param {File} file - Archivo de imagen
+   * @param {string} boothId - ID del booth (opcional)
+   * @returns {Promise} - Promesa con la URL de la imagen
+   */
+  uploadLogo: (file, boothId = null) => {
+    const formData = new FormData()
+    formData.append('logo', file)
+    if (boothId) formData.append('boothId', boothId)
+    return api.post('/upload/logo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+
+  /**
+   * Upload cover image (evento o booth) - rectangular 16:9
+   * @param {File} file - Archivo de imagen
+   * @param {string} entityType - 'event' o 'booth'
+   * @param {string} entityId - ID del evento o booth (opcional)
+   * @returns {Promise} - Promesa con la URL de la imagen
+   */
+  uploadCover: (file, entityType, entityId = null) => {
+    const formData = new FormData()
+    formData.append('cover', file)
+    formData.append('entityType', entityType)
+    if (entityId) formData.append('entityId', entityId)
+    return api.post('/upload/cover', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+
+  /**
+   * Upload imagen de producto - cuadrada
+   * @param {File} file - Archivo de imagen
+   * @param {string} productId - ID del producto (opcional)
+   * @param {string} boothId - ID del booth (opcional)
+   * @returns {Promise} - Promesa con la URL de la imagen
+   */
+  uploadProductImage: (file, productId = null, boothId = null) => {
+    const formData = new FormData()
+    formData.append('product', file)
+    if (productId) formData.append('productId', productId)
+    if (boothId) formData.append('boothId', boothId)
+    return api.post('/upload/product', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+
+  /**
+   * Upload múltiples imágenes de producto - cuadradas
+   * @param {File[]} files - Array de archivos de imagen (máximo 5)
+   * @returns {Promise} - Promesa con array de URLs
+   */
+  uploadProductImages: (files) => {
+    const formData = new FormData()
+    files.forEach(file => {
+      formData.append('products', file)
+    })
+    return api.post('/upload/products', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+
+  /**
+   * Upload comprobante de pago
+   * @param {File} file - Archivo de imagen del comprobante
+   * @param {string} orderId - ID de la orden (opcional)
+   * @param {string} userName - Nombre del usuario (opcional)
+   * @returns {Promise} - Promesa con la URL de la imagen
+   */
+  uploadPaymentProof: (file, orderId = null, userName = null) => {
+    const formData = new FormData()
+    formData.append('paymentProof', file)
+    if (orderId) formData.append('orderId', orderId)
+    if (userName) formData.append('userName', userName)
+    return api.post('/upload/payment-proof', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+
+  /**
+   * Eliminar imagen
+   * @param {string} imageId - ID de la imagen en Cloudflare
+   * @returns {Promise}
+   */
+  deleteImage: (imageId) => api.delete(`/upload/${imageId}`),
+
+  /**
+   * Obtener URL de imagen con variant específico
+   * @param {string} imageId - ID de la imagen
+   * @param {string} variant - Variant (avatar, logo, product, cover, thumbnail, public)
+   * @returns {Promise}
+   */
+  getImageUrl: (imageId, variant = 'public') => api.get(`/upload/url/${imageId}/${variant}`)
+}

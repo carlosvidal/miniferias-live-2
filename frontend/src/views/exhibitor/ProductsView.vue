@@ -25,7 +25,7 @@
           <!-- Product Image -->
           <div class="flex-shrink-0">
             <div v-if="product.images?.[0]" class="w-20 h-20 rounded-lg overflow-hidden bg-gray-100">
-              <img :src="product.images[0]" :alt="product.name" class="w-full h-full object-cover" />
+              <img :src="getProductImageUrl(product.images[0])" :alt="product.name" class="w-full h-full object-cover" />
             </div>
             <div v-else class="w-20 h-20 rounded-lg bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
               <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,20 +171,64 @@
               </div>
             </div>
 
-            <!-- Image URL -->
+            <!-- Product Images -->
             <div>
               <label class="block text-sm font-bold text-gray-900 mb-2">
-                URL de Imagen
+                Imágenes del Producto
               </label>
-              <input
-                v-model="form.imageUrl"
-                type="url"
-                class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="https://ejemplo.com/producto.jpg"
-              />
-              <p class="text-xs text-gray-500 mt-2">
-                Sube tu imagen a Imgur, Cloudinary u otro servicio y pega el enlace
+              <p class="text-xs text-gray-500 mb-3">
+                Puedes subir hasta 5 imágenes. Las imágenes deben ser cuadradas para mejores resultados.
               </p>
+
+              <!-- Current Images -->
+              <div v-if="form.images && form.images.length > 0" class="grid grid-cols-3 gap-2 mb-3">
+                <div
+                  v-for="(image, index) in form.images"
+                  :key="index"
+                  class="relative aspect-square"
+                >
+                  <img
+                    :src="getProductImageUrl(image, 'small')"
+                    alt="Producto"
+                    class="w-full h-full object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    @click="removeImage(index)"
+                    class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1.5 hover:bg-red-700 active:scale-95 transition-all shadow-lg"
+                  >
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                  <span class="absolute bottom-1 right-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">
+                    {{ index + 1 }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Upload New Images -->
+              <div v-if="!form.images || form.images.length < 5">
+                <ImageUpload
+                  type="product"
+                  :multiple="form.images?.length < 4"
+                  :entity-id="myBooth?.id"
+                  @uploaded="handleProductImagesUploaded"
+                  alt="Imágenes del producto"
+                />
+              </div>
+
+              <p v-else class="text-xs text-gray-500 mt-2">
+                Máximo 5 imágenes alcanzado. Elimina una para agregar más.
+              </p>
+            </div>
+
+            <!-- Success Message -->
+            <div v-if="successMessage" class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl flex items-center gap-2">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+              {{ successMessage }}
             </div>
 
             <!-- Error Message -->
@@ -260,9 +304,12 @@ import { ref, onMounted } from 'vue'
 import { useProductsStore } from '@/stores/products'
 import { useBoothsStore } from '@/stores/booths'
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
+import ImageUpload from '@/components/shared/ImageUpload.vue'
+import { useImageUpload } from '@/composables/useImageUpload'
 
 const productsStore = useProductsStore()
 const boothsStore = useBoothsStore()
+const { getImageUrl } = useImageUpload()
 
 const loading = ref(true)
 const myBooth = ref(null)
@@ -275,13 +322,14 @@ const editingProduct = ref(null)
 const submitting = ref(false)
 const deleting = ref(false)
 const errorMessage = ref('')
+const successMessage = ref('')
 
 const form = ref({
   name: '',
   description: '',
   price: 0,
   stock: 0,
-  imageUrl: ''
+  images: []
 })
 
 onMounted(async () => {
@@ -305,6 +353,40 @@ function formatPrice(price) {
   }).format(price)
 }
 
+// Helper to get product image URL with correct variant
+function getProductImageUrl(imageUrl, variant = 'medium') {
+  if (!imageUrl) return null
+  // Si ya es una URL de Cloudflare, extraer el ID y usar el variant correcto
+  if (imageUrl.includes('imagedelivery.net')) {
+    const matches = imageUrl.match(/imagedelivery\.net\/[^\/]+\/([^\/]+)/)
+    if (matches && matches[1]) {
+      return getImageUrl(matches[1], variant)
+    }
+  }
+  return imageUrl
+}
+
+function handleProductImagesUploaded(results) {
+  // results puede ser un array de objetos con URLs o un objeto único
+  const newImages = Array.isArray(results)
+    ? results.map(r => r.url)
+    : [results.url]
+
+  // Agregar las nuevas imágenes a las existentes (máximo 5)
+  const currentImages = form.value.images || []
+  form.value.images = [...currentImages, ...newImages].slice(0, 5)
+
+  successMessage.value = `${newImages.length} imagen${newImages.length > 1 ? 'es' : ''} subida${newImages.length > 1 ? 's' : ''} correctamente`
+
+  setTimeout(() => {
+    successMessage.value = ''
+  }, 3000)
+}
+
+function removeImage(index) {
+  form.value.images.splice(index, 1)
+}
+
 function editProduct(product) {
   editingProduct.value = product
   form.value = {
@@ -312,9 +394,11 @@ function editProduct(product) {
     description: product.description,
     price: product.price,
     stock: product.stock,
-    imageUrl: product.images?.[0] || ''
+    images: product.images || []
   }
   showEditModal.value = true
+  errorMessage.value = ''
+  successMessage.value = ''
 }
 
 function confirmDelete(product) {
@@ -325,6 +409,7 @@ function confirmDelete(product) {
 async function handleSubmit() {
   submitting.value = true
   errorMessage.value = ''
+  successMessage.value = ''
 
   try {
     const data = {
@@ -332,7 +417,9 @@ async function handleSubmit() {
       description: form.value.description,
       price: parseFloat(form.value.price),
       stock: parseInt(form.value.stock),
-      images: form.value.imageUrl ? [form.value.imageUrl] : ['https://placehold.co/400x400/e5e5e5/666?text=No+Image'],
+      images: form.value.images && form.value.images.length > 0
+        ? form.value.images
+        : ['https://placehold.co/400x400/e5e5e5/666?text=No+Image'],
       boothId: myBooth.value.id
     }
 
@@ -378,9 +465,10 @@ function closeModal() {
     description: '',
     price: 0,
     stock: 0,
-    imageUrl: ''
+    images: []
   }
   errorMessage.value = ''
+  successMessage.value = ''
 }
 </script>
 

@@ -61,7 +61,7 @@
           <!-- Booth Logo/Avatar -->
           <div
             class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-10 h-10 ring-2 ring-white/30"
-            :style="`background-image: url(${booth.bannerUrl || 'https://via.placeholder.com/40'})`"
+            :style="`background-image: url(${booth.logo || 'https://via.placeholder.com/40'})`"
           ></div>
           <div>
             <p class="text-white text-base font-bold leading-tight">{{ booth.name }}</p>
