@@ -17,7 +17,7 @@
         <div class="mb-8">
           <div v-if="event.coverImage" class="mb-6">
             <img
-              :src="event.coverImage"
+              :src="getCloudflareImageUrl(event.coverImage, 'cover')"
               :alt="event.name"
               class="w-full h-64 md:h-96 object-cover rounded-lg"
             />
@@ -68,7 +68,7 @@
               <div class="relative mb-4">
                 <img
                   v-if="booth.bannerUrl || booth.coverPhoto"
-                  :src="booth.bannerUrl || booth.coverPhoto"
+                  :src="getCloudflareImageUrl(booth.bannerUrl || booth.coverPhoto, 'cover')"
                   :alt="booth.name"
                   class="w-full h-48 object-cover rounded-lg"
                 />
@@ -93,9 +93,9 @@
                 <!-- Logo -->
                 <img
                   v-if="booth.logo"
-                  :src="booth.logo"
+                  :src="getCloudflareImageUrl(booth.logo, 'logo')"
                   :alt="booth.name"
-                  class="w-16 h-16 object-cover rounded-lg"
+                  class="w-16 h-16 object-cover rounded-full"
                 />
 
                 <div class="flex-1">
@@ -124,10 +124,12 @@ import { useRoute } from 'vue-router'
 import { useEventsStore } from '@/stores/events'
 import AppHeader from '@/components/shared/AppHeader.vue'
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
+import { useImageUpload } from '@/composables/useImageUpload'
 
 const route = useRoute()
 const eventsStore = useEventsStore()
 const event = ref(null)
+const { getImageUrl } = useImageUpload()
 
 function formatDate(dateString) {
   const date = new Date(dateString)
@@ -136,6 +138,18 @@ function formatDate(dateString) {
     month: 'short',
     year: 'numeric'
   })
+}
+
+function getCloudflareImageUrl(imageUrl, variant = 'public') {
+  if (!imageUrl) return null
+  // Si ya es una URL de Cloudflare, extraer el ID y usar el variant correcto
+  if (imageUrl.includes('imagedelivery.net')) {
+    const matches = imageUrl.match(/imagedelivery\.net\/[^\/]+\/([^\/]+)/)
+    if (matches && matches[1]) {
+      return getImageUrl(matches[1], variant)
+    }
+  }
+  return imageUrl
 }
 
 onMounted(async () => {
