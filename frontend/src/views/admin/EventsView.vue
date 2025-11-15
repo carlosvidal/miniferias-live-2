@@ -20,11 +20,11 @@
         class="card hover:shadow-lg transition-shadow"
       >
         <!-- Banner Image -->
-        <div v-if="event.coverImage" class="mb-4 -mx-6 -mt-6">
+        <div v-if="event.coverImage" class="mb-4 -mx-6 -mt-6 aspect-video overflow-hidden rounded-t-lg">
           <img
             :src="getCoverImageUrl(event.coverImage)"
             :alt="event.name"
-            class="w-full h-48 object-cover rounded-t-lg"
+            class="w-full h-full object-cover"
           />
         </div>
 

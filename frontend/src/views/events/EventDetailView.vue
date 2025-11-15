@@ -15,11 +15,11 @@
       <div v-else-if="event">
         <!-- Event Header -->
         <div class="mb-8">
-          <div v-if="event.coverImage" class="mb-6">
+          <div v-if="event.coverImage" class="mb-6 aspect-video overflow-hidden rounded-lg">
             <img
               :src="getCloudflareImageUrl(event.coverImage, 'cover')"
               :alt="event.name"
-              class="w-full h-64 md:h-96 object-cover rounded-lg"
+              class="w-full h-full object-cover"
             />
           </div>
 
@@ -65,16 +65,16 @@
               class="card hover:shadow-lg transition-shadow cursor-pointer"
             >
               <!-- Cover Photo -->
-              <div class="relative mb-4">
+              <div class="relative mb-4 aspect-video overflow-hidden rounded-lg">
                 <img
                   v-if="booth.bannerUrl || booth.coverPhoto"
                   :src="getCloudflareImageUrl(booth.bannerUrl || booth.coverPhoto, 'cover')"
                   :alt="booth.name"
-                  class="w-full h-48 object-cover rounded-lg"
+                  class="w-full h-full object-cover"
                 />
                 <div
                   v-else
-                  class="w-full h-48 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center"
+                  class="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center"
                 >
                   <span class="text-6xl">🏪</span>
                 </div>
