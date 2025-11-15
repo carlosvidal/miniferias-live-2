@@ -19,6 +19,15 @@
         :key="event.id"
         class="card hover:shadow-lg transition-shadow"
       >
+        <!-- Banner Image -->
+        <div v-if="event.coverImage" class="mb-4 -mx-6 -mt-6">
+          <img
+            :src="getCoverImageUrl(event.coverImage)"
+            :alt="event.name"
+            class="w-full h-48 object-cover rounded-t-lg"
+          />
+        </div>
+
         <div class="flex items-start justify-between">
           <div class="flex-1">
             <div class="flex items-center gap-3 mb-2">
@@ -154,16 +163,21 @@
               </div>
             </div>
 
-            <!-- Banner URL -->
+            <!-- Banner Image -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                URL del Banner
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Banner del Evento
               </label>
-              <input
+              <p class="text-xs text-gray-500 mb-3">
+                Imagen de portada en formato 16:9 (1280x720px recomendado)
+              </p>
+              <ImageUpload
+                type="cover"
+                entity-type="event"
+                :entity-id="editingEvent?.id"
                 v-model="form.bannerUrl"
-                type="url"
-                class="input"
-                placeholder="https://ejemplo.com/banner.jpg"
+                alt="Banner del evento"
+                @uploaded="handleBannerUploaded"
               />
             </div>
 
@@ -245,8 +259,11 @@
 import { ref, onMounted } from 'vue'
 import { useEventsStore } from '@/stores/events'
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
+import ImageUpload from '@/components/shared/ImageUpload.vue'
+import { useImageUpload } from '@/composables/useImageUpload'
 
 const eventsStore = useEventsStore()
+const { getImageUrl } = useImageUpload()
 
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
@@ -323,6 +340,23 @@ function editEvent(event) {
 function confirmDelete(event) {
   eventToDelete.value = event
   showDeleteModal.value = true
+}
+
+function handleBannerUploaded(result) {
+  console.log('Banner subido:', result)
+  // La URL ya se actualiza automáticamente en form.bannerUrl por el v-model
+}
+
+function getCoverImageUrl(imageUrl) {
+  if (!imageUrl) return null
+  // Si ya es una URL de Cloudflare, extraer el ID y usar el variant 'cover'
+  if (imageUrl.includes('imagedelivery.net')) {
+    const matches = imageUrl.match(/imagedelivery\.net\/[^\/]+\/([^\/]+)/)
+    if (matches && matches[1]) {
+      return getImageUrl(matches[1], 'cover')
+    }
+  }
+  return imageUrl
 }
 
 async function handleSubmit() {
