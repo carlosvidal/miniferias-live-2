@@ -58,7 +58,10 @@ export async function uploadImage(fileBuffer, fileName, imageType = IMAGE_TYPES.
 
     // Crear FormData para el upload
     const formData = new FormData();
-    formData.append('file', fileBuffer, fileName);
+
+    // Convertir Buffer a Blob para Node.js 18+ FormData
+    const blob = new Blob([fileBuffer]);
+    formData.append('file', blob, fileName);
 
     // Agregar metadata
     const imageConfig = Object.values(IMAGE_TYPES).find(t => t.type === imageType) || IMAGE_TYPES.AVATAR;
