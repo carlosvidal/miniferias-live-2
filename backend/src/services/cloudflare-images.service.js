@@ -1,5 +1,4 @@
-import FormData from 'form-data';
-import fetch from 'node-fetch';
+// Node.js 18+ tiene fetch y FormData nativos, no necesitamos imports
 
 const CLOUDFLARE_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
 const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
