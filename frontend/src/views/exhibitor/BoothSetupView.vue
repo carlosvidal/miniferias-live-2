@@ -504,19 +504,39 @@ function closeEditModal() {
   successMessage.value = ''
 }
 
-function handleLogoUploaded(result) {
+async function handleLogoUploaded(result) {
   console.log('Logo subido:', result)
-  successMessage.value = 'Logo actualizado correctamente'
+
+  // Actualizar el logo en el booth inmediatamente
+  try {
+    await boothsStore.updateBooth(booth.value.id, { logo: result.url })
+    await loadBooth() // Refrescar para obtener los datos más recientes
+    successMessage.value = 'Logo actualizado correctamente'
+  } catch (err) {
+    errorMessage.value = 'Error al guardar el logo'
+  }
+
   setTimeout(() => {
     successMessage.value = ''
+    errorMessage.value = ''
   }, 3000)
 }
 
-function handleBannerUploaded(result) {
+async function handleBannerUploaded(result) {
   console.log('Banner subido:', result)
-  successMessage.value = 'Banner actualizado correctamente'
+
+  // Actualizar el banner en el booth inmediatamente
+  try {
+    await boothsStore.updateBooth(booth.value.id, { bannerUrl: result.url })
+    await loadBooth() // Refrescar para obtener los datos más recientes
+    successMessage.value = 'Banner actualizado correctamente'
+  } catch (err) {
+    errorMessage.value = 'Error al guardar el banner'
+  }
+
   setTimeout(() => {
     successMessage.value = ''
+    errorMessage.value = ''
   }, 3000)
 }
 
