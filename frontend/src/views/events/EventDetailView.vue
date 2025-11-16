@@ -2,27 +2,32 @@
   <div class="min-h-screen bg-gradient-to-b from-gray-50 to-white">
     <AppHeader />
 
-    <main class="max-w-lg lg:max-w-7xl mx-auto px-4 py-8">
-      <!-- Loading -->
-      <LoadingSpinner v-if="eventsStore.loading" />
+    <main class="max-w-lg lg:max-w-7xl mx-auto px-4 pb-8">
+      <!-- Event Header with Cover -->
+      <div v-if="eventsStore.loading" class="py-8">
+        <LoadingSpinner />
+      </div>
 
       <!-- Error -->
-      <div v-else-if="eventsStore.error" class="text-center text-red-600 py-8">
-        {{ eventsStore.error }}
+      <div v-else-if="eventsStore.error" class="text-center py-12">
+        <div class="inline-block p-4 bg-red-50 text-red-600 rounded-2xl">
+          {{ eventsStore.error }}
+        </div>
       </div>
 
       <!-- Event Content -->
       <div v-else-if="event">
-        <!-- Event Header -->
-        <div class="mb-8">
-          <div v-if="event.coverImage" class="mb-6 aspect-video overflow-hidden rounded-lg">
-            <img
-              :src="getCloudflareImageUrl(event.coverImage, 'cover')"
-              :alt="event.name"
-              class="w-full h-full object-cover"
-            />
-          </div>
+        <!-- Cover Image -->
+        <div v-if="event.coverImage" class="mb-6 mt-6 aspect-video overflow-hidden rounded-lg">
+          <img
+            :src="getCloudflareImageUrl(event.coverImage, 'cover')"
+            :alt="event.name"
+            class="w-full h-full object-cover"
+          />
+        </div>
 
+        <!-- Event Info -->
+        <div class="mb-8">
           <div class="flex items-start justify-between">
             <div>
               <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
