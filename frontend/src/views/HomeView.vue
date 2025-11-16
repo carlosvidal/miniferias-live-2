@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gradient-to-b from-gray-50 to-white">
     <!-- Mobile Header with Profile -->
     <header class="sticky top-0 z-20 bg-white/80 backdrop-blur-lg border-b border-gray-200">
-      <div class="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="max-w-lg lg:max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         <div>
           <h1 class="text-xl font-bold text-gray-900">Miniferias</h1>
           <p class="text-xs text-gray-500">Live Shopping</p>
@@ -41,7 +41,7 @@
       </div>
     </header>
 
-    <main class="max-w-lg mx-auto px-4 pb-8">
+    <main class="max-w-lg lg:max-w-7xl mx-auto px-4 pb-8">
       <!-- Hero Section - Compact -->
       <section class="py-6 text-center">
         <div class="inline-block px-4 py-1 bg-pink-100 text-pink-600 rounded-full text-sm font-medium mb-3">
@@ -107,8 +107,8 @@
         </div>
       </div>
 
-      <!-- Events List (Vertical Stack for Mobile) -->
-      <div v-else-if="filteredEvents.length > 0" class="space-y-4">
+      <!-- Events Grid (Responsive) -->
+      <div v-else-if="filteredEvents.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <EventCard
           v-for="event in filteredEvents"
           :key="event.id"
