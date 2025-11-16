@@ -204,6 +204,6 @@ async function handleLogout() {
   await authStore.logout()
   showUserMenu.value = false
   showMobileMenu.value = false
-  router.push('/login')
+  router.push('/')
 }
 </script>
