@@ -173,7 +173,7 @@ function isActive(path) {
 async function handleLogout() {
   await authStore.logout()
   showMenu.value = false
-  router.push('/login')
+  router.push('/')
 }
 
 onMounted(async () => {
