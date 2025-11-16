@@ -58,59 +58,11 @@
 
           <!-- Booths Grid -->
           <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <router-link
+            <BoothCard
               v-for="booth in event.booths"
               :key="booth.id"
-              :to="`/booths/${booth.id}`"
-              class="card hover:shadow-lg transition-shadow cursor-pointer"
-            >
-              <!-- Cover Photo -->
-              <div class="relative mb-4 aspect-video overflow-hidden rounded-lg">
-                <img
-                  v-if="booth.bannerUrl || booth.coverPhoto"
-                  :src="getCloudflareImageUrl(booth.bannerUrl || booth.coverPhoto, 'cover')"
-                  :alt="booth.name"
-                  class="w-full h-full object-cover"
-                />
-                <div
-                  v-else
-                  class="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center"
-                >
-                  <span class="text-6xl">🏪</span>
-                </div>
-
-                <!-- Streaming Badge -->
-                <span
-                  v-if="booth.isStreaming"
-                  class="absolute top-3 right-3 badge badge-live"
-                >
-                  🔴 EN VIVO
-                </span>
-              </div>
-
-              <!-- Booth Info -->
-              <div class="flex items-start space-x-4">
-                <!-- Logo -->
-                <img
-                  v-if="booth.logo"
-                  :src="getCloudflareImageUrl(booth.logo, 'logo')"
-                  :alt="booth.name"
-                  class="w-16 h-16 object-cover rounded-full"
-                />
-
-                <div class="flex-1">
-                  <h3 class="text-xl font-bold text-gray-900 mb-1">
-                    {{ booth.name }}
-                  </h3>
-                  <p class="text-sm text-gray-600 line-clamp-2 mb-2">
-                    {{ booth.description }}
-                  </p>
-                  <div class="text-sm text-gray-500">
-                    📦 {{ booth._count?.products || 0 }} productos
-                  </div>
-                </div>
-              </div>
-            </router-link>
+              :booth="booth"
+            />
           </div>
         </section>
       </div>
@@ -124,6 +76,7 @@ import { useRoute } from 'vue-router'
 import { useEventsStore } from '@/stores/events'
 import AppHeader from '@/components/shared/AppHeader.vue'
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
+import BoothCard from '@/components/booths/BoothCard.vue'
 import { useImageUpload } from '@/composables/useImageUpload'
 
 const route = useRoute()
@@ -156,12 +109,3 @@ onMounted(async () => {
   event.value = await eventsStore.fetchEventBySlug(route.params.slug)
 })
 </script>
-
-<style scoped>
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-</style>
