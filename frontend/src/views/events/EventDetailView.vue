@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen">
+  <div class="min-h-screen bg-gradient-to-b from-gray-50 to-white">
     <AppHeader />
 
-    <main class="container mx-auto px-4 py-8">
+    <main class="max-w-lg lg:max-w-7xl mx-auto px-4 py-8">
       <!-- Loading -->
       <LoadingSpinner v-if="eventsStore.loading" />
 

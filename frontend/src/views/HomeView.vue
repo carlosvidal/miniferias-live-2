@@ -1,45 +1,6 @@
 <template>
   <div class="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-    <!-- Mobile Header with Profile -->
-    <header class="sticky top-0 z-20 bg-white/80 backdrop-blur-lg border-b border-gray-200">
-      <div class="max-w-lg lg:max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-        <div>
-          <h1 class="text-xl font-bold text-gray-900">Miniferias</h1>
-          <p class="text-xs text-gray-500">Live Shopping</p>
-        </div>
-        <div class="flex items-center gap-3">
-          <!-- Cart -->
-          <router-link
-            to="/cart"
-            class="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
-          >
-            <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-            </svg>
-            <span v-if="cartStore.itemCount > 0" class="absolute -top-1 -right-1 bg-pink-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-              {{ cartStore.itemCount }}
-            </span>
-          </router-link>
-          <!-- Profile/Login -->
-          <button
-            v-if="authStore.isAuthenticated"
-            @click="$router.push(authStore.user?.role === 'EXHIBITOR' ? '/exhibitor/dashboard' : '/profile')"
-            class="p-2 rounded-full hover:bg-gray-100 transition-colors"
-          >
-            <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          </button>
-          <button
-            v-else
-            @click="$router.push('/login')"
-            class="px-4 py-1.5 bg-pink-600 text-white text-sm font-medium rounded-full hover:bg-pink-700 transition-colors"
-          >
-            Ingresar
-          </button>
-        </div>
-      </div>
-    </header>
+    <AppHeader />
 
     <main class="max-w-lg lg:max-w-7xl mx-auto px-4 pb-8">
       <!-- Hero Section - Compact -->
@@ -131,6 +92,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useEventsStore } from '@/stores/events'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
+import AppHeader from '@/components/shared/AppHeader.vue'
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
 import EventCard from '@/components/events/EventCard.vue'
 
