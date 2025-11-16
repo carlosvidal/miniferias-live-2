@@ -1,6 +1,6 @@
 <template>
   <!-- Full Screen Live Shopping Experience -->
-  <div class="relative flex h-screen w-full lg:max-w-none mx-auto flex-col lg:flex-row overflow-hidden bg-black">
+  <div class="relative flex h-screen w-full max-w-lg lg:max-w-none mx-auto flex-col lg:flex-row overflow-hidden bg-black">
 
     <!-- Main Content Area with Video Player -->
     <div class="absolute lg:relative inset-0 lg:inset-auto h-full w-full lg:w-[45%] lg:flex-shrink-0">
@@ -52,11 +52,11 @@
       </div>
     </div>
 
-    <!-- UI Overlay (Mobile) / Side Panels (Desktop) -->
-    <div v-if="booth" class="relative lg:static z-10 flex h-full w-full lg:flex-1 flex-col lg:flex-row justify-between pointer-events-none lg:pointer-events-auto">
+    <!-- UI Overlay (Mobile Only) -->
+    <div v-if="booth" class="lg:hidden relative z-10 flex h-full w-full flex-col justify-between pointer-events-none">
 
-      <!-- Top App Bar (Mobile only) -->
-      <div class="lg:hidden flex items-center p-4 pb-2 justify-between bg-gradient-to-b from-black/60 via-black/30 to-transparent pointer-events-auto">
+      <!-- Top App Bar -->
+      <div class="flex items-center p-4 pb-2 justify-between bg-gradient-to-b from-black/60 via-black/30 to-transparent pointer-events-auto">
         <div class="flex items-center gap-3">
           <!-- Booth Logo/Avatar -->
           <div
@@ -97,10 +97,77 @@
         </div>
       </div>
 
-      <!-- Chat Column (Desktop) / Comments Overlay (Mobile) -->
-      <div class="flex flex-col lg:w-[35%] lg:bg-gray-900 lg:border-r lg:border-gray-800">
-        <!-- Desktop Header -->
-        <div class="hidden lg:flex items-center justify-between p-4 border-b border-gray-800 bg-gray-800">
+      <!-- Center Area: Comments and Products -->
+      <div class="flex flex-1 justify-between p-4 pb-0 pointer-events-none">
+
+        <!-- Comments Overlay (Left Side) -->
+        <div class="flex flex-col-reverse self-end h-1/2 max-w-[65%] overflow-hidden pointer-events-auto"
+             style="mask-image: linear-gradient(to top, black 60%, transparent 100%)">
+          <div class="flex flex-col gap-2">
+            <div
+              v-for="message in recentMessages"
+              :key="message.id"
+              class="flex w-full flex-row items-start justify-start gap-2 animate-slide-up"
+            >
+              <div
+                class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-7 h-7 shrink-0"
+                :style="`background-image: url(https://ui-avatars.com/api/?name=${encodeURIComponent(message.user?.name || 'User')}&background=random)`"
+              ></div>
+              <div class="flex h-full flex-1 flex-col items-start justify-start rounded-lg bg-black/40 p-2 backdrop-blur-sm">
+                <p class="text-white text-xs font-bold">{{ message.user?.name || 'Usuario' }}</p>
+                <p class="text-white text-sm font-normal leading-snug">{{ message.content }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product Carousel - Vertical on the right -->
+        <div class="flex flex-col items-stretch justify-end gap-2 pointer-events-auto">
+          <div
+            v-for="(product, index) in products.slice(0, 3)"
+            :key="product.id"
+            @click="showProductModal(product)"
+            class="flex w-16 h-16 shrink-0 flex-col gap-4 rounded-lg cursor-pointer hover:scale-110 transition-transform"
+            :class="index === selectedProductIndex ? 'ring-2 ring-pink-500 shadow-lg' : ''"
+          >
+            <div
+              class="h-full w-full bg-center bg-no-repeat bg-cover rounded-lg"
+              :style="`background-image: url(${product.images?.[0] || 'https://via.placeholder.com/64'})`"
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Input Bar -->
+      <div class="p-4 bg-gradient-to-t from-black/60 via-black/30 to-transparent pointer-events-auto">
+        <div class="flex items-center gap-3">
+          <input
+            v-model="newComment"
+            @keyup.enter="sendComment"
+            class="h-12 flex-1 rounded-full border-none bg-black/30 px-4 text-white placeholder-white/60 focus:ring-2 focus:ring-pink-500 backdrop-blur-sm"
+            placeholder="Escribe un comentario..."
+            type="text"
+          />
+          <button
+            @click="sendComment"
+            :disabled="!newComment.trim()"
+            class="flex shrink-0 items-center justify-center rounded-full w-12 h-12 bg-pink-600 text-white hover:bg-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desktop Layout (3 Columns) -->
+    <div v-if="booth" class="hidden lg:flex flex-1 flex-row">
+
+      <!-- Chat Column -->
+      <div class="flex flex-col w-[55%] bg-gray-900 border-r border-gray-800">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-4 border-b border-gray-800 bg-gray-800">
           <div class="flex items-center gap-3">
             <div
               class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-10 h-10 ring-2 ring-white/30"
@@ -125,34 +192,31 @@
           </button>
         </div>
 
-        <!-- Comments (Mobile: overlay, Desktop: full column) -->
-        <div class="flex-1 flex flex-col-reverse lg:flex-col self-end lg:self-auto h-1/2 lg:h-auto max-w-[65%] lg:max-w-none overflow-hidden lg:overflow-y-auto pointer-events-auto p-4 pb-0 lg:pb-4 lg:space-y-3"
-             :class="{ 'comments-mask-mobile': true }">
-          <div class="flex flex-col gap-2 lg:gap-3">
+        <!-- Messages -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-3">
+          <div
+            v-for="message in messages"
+            :key="message.id"
+            class="flex w-full flex-row items-start justify-start gap-2"
+          >
             <div
-              v-for="message in (isMobile ? recentMessages : messages)"
-              :key="message.id"
-              class="flex w-full flex-row items-start justify-start gap-2 animate-slide-up"
-            >
-              <div
-                class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-7 h-7 lg:w-8 lg:h-8 shrink-0"
-                :style="`background-image: url(https://ui-avatars.com/api/?name=${encodeURIComponent(message.user?.name || 'User')}&background=random)`"
-              ></div>
-              <div class="flex h-full flex-1 flex-col items-start justify-start rounded-lg bg-black/40 lg:bg-gray-800 p-2 lg:p-3 backdrop-blur-sm">
-                <p class="text-white text-xs lg:text-sm font-bold">{{ message.user?.name || 'Usuario' }}</p>
-                <p class="text-white text-sm lg:text-base font-normal leading-snug">{{ message.content }}</p>
-              </div>
+              class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-8 h-8 shrink-0"
+              :style="`background-image: url(https://ui-avatars.com/api/?name=${encodeURIComponent(message.user?.name || 'User')}&background=random)`"
+            ></div>
+            <div class="flex h-full flex-1 flex-col items-start justify-start rounded-lg bg-gray-800 p-3">
+              <p class="text-white text-sm font-bold">{{ message.user?.name || 'Usuario' }}</p>
+              <p class="text-white text-base font-normal leading-snug">{{ message.content }}</p>
             </div>
           </div>
         </div>
 
-        <!-- Bottom Input (Mobile: absolute, Desktop: fixed at bottom of chat column) -->
-        <div class="p-4 bg-gradient-to-t from-black/60 via-black/30 to-transparent lg:bg-gray-800 lg:border-t lg:border-gray-700 pointer-events-auto">
+        <!-- Input -->
+        <div class="p-4 bg-gray-800 border-t border-gray-700">
           <div class="flex items-center gap-3">
             <input
               v-model="newComment"
               @keyup.enter="sendComment"
-              class="h-12 flex-1 rounded-full border-none bg-black/30 lg:bg-gray-700 px-4 text-white placeholder-white/60 focus:ring-2 focus:ring-pink-500 backdrop-blur-sm"
+              class="h-12 flex-1 rounded-full border-none bg-gray-700 px-4 text-white placeholder-white/60 focus:ring-2 focus:ring-pink-500"
               placeholder="Escribe un comentario..."
               type="text"
             />
@@ -169,10 +233,10 @@
         </div>
       </div>
 
-      <!-- Products Column (Desktop) / Product Carousel (Mobile) -->
-      <div class="flex flex-col lg:w-[25%] lg:bg-gray-800 gap-2 lg:gap-0 items-stretch justify-end lg:justify-start pointer-events-auto p-4 lg:p-0">
-        <!-- Desktop Header -->
-        <div class="hidden lg:flex items-center justify-between p-4 border-b border-gray-700 bg-gray-900">
+      <!-- Products Column -->
+      <div class="flex flex-col w-[45%] bg-gray-800">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-900">
           <h3 class="text-white text-lg font-bold">Productos</h3>
           <button
             @click="showCartModal = true"
@@ -188,19 +252,19 @@
         </div>
 
         <!-- Products List -->
-        <div class="flex flex-col items-stretch gap-2 lg:gap-0 lg:overflow-y-auto lg:p-4">
+        <div class="flex-1 overflow-y-auto p-4">
           <div
             v-for="(product, index) in products"
             :key="product.id"
             @click="showProductModal(product)"
-            class="flex lg:flex-row w-16 h-16 lg:w-full lg:h-auto shrink-0 gap-4 lg:gap-3 rounded-lg lg:rounded-xl cursor-pointer hover:scale-110 lg:hover:scale-100 lg:hover:bg-gray-700 transition-all lg:p-3 lg:mb-3"
+            class="flex flex-row gap-3 rounded-xl cursor-pointer hover:bg-gray-700 transition-all p-3 mb-3"
             :class="index === selectedProductIndex ? 'ring-2 ring-pink-500 shadow-lg' : ''"
           >
             <div
-              class="h-full w-full lg:w-20 lg:h-20 bg-center bg-no-repeat bg-cover rounded-lg lg:rounded-xl shrink-0"
+              class="w-20 h-20 bg-center bg-no-repeat bg-cover rounded-xl shrink-0"
               :style="`background-image: url(${product.images?.[0] || 'https://via.placeholder.com/64'})`"
             ></div>
-            <div class="hidden lg:flex lg:flex-col lg:flex-1 lg:justify-center">
+            <div class="flex flex-col flex-1 justify-center">
               <p class="text-white text-sm font-semibold line-clamp-2">{{ product.name }}</p>
               <p class="text-pink-400 text-lg font-bold mt-1">S/ {{ formatPrice(product.price) }}</p>
               <p v-if="product.stock > 0" class="text-gray-400 text-xs mt-1">Stock: {{ product.stock }}</p>
@@ -371,12 +435,6 @@ let messagePollingInterval = null
 // Only show last 5 messages as overlay
 const recentMessages = computed(() => {
   return messages.value.slice(-5)
-})
-
-// Detect if we're on mobile (< 1024px)
-const isMobile = computed(() => {
-  if (typeof window === 'undefined') return true
-  return window.innerWidth < 1024
 })
 
 // Product modal
@@ -621,16 +679,5 @@ function formatPrice(price) {
 
 .overflow-y-auto {
   scrollbar-width: none;
-}
-
-/* Comments gradient mask for mobile */
-.comments-mask-mobile {
-  mask-image: linear-gradient(to top, black 60%, transparent 100%);
-}
-
-@media (min-width: 1024px) {
-  .comments-mask-mobile {
-    mask-image: none;
-  }
 }
 </style>
