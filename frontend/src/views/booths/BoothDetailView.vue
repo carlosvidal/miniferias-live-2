@@ -1,9 +1,9 @@
 <template>
   <!-- Full Screen Live Shopping Experience -->
-  <div class="relative flex h-screen w-full max-w-lg mx-auto flex-col overflow-hidden bg-black">
+  <div class="relative flex h-screen w-full max-w-lg lg:max-w-none mx-auto flex-col lg:flex-row overflow-hidden bg-black">
 
     <!-- Main Content Area with Video Player -->
-    <div class="absolute inset-0 h-full w-full">
+    <div class="absolute lg:relative inset-0 lg:inset-auto h-full w-full lg:w-[45%] lg:flex-shrink-0">
       <!-- Loading State -->
       <div v-if="loading" class="flex h-full items-center justify-center bg-gray-900">
         <LoadingSpinner />
@@ -52,8 +52,8 @@
       </div>
     </div>
 
-    <!-- UI Overlay -->
-    <div v-if="booth" class="relative z-10 flex h-full w-full flex-col justify-between pointer-events-none">
+    <!-- UI Overlay (Mobile Only) -->
+    <div v-if="booth" class="lg:hidden relative z-10 flex h-full w-full flex-col justify-between pointer-events-none">
 
       <!-- Top App Bar -->
       <div class="flex items-center p-4 pb-2 justify-between bg-gradient-to-b from-black/60 via-black/30 to-transparent pointer-events-auto">
@@ -157,6 +157,120 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desktop Layout (3 Columns) -->
+    <div v-if="booth" class="hidden lg:flex flex-1 flex-row">
+
+      <!-- Chat Column -->
+      <div class="flex flex-col w-[55%] bg-gray-900 border-r border-gray-800">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-4 border-b border-gray-800 bg-gray-800">
+          <div class="flex items-center gap-3">
+            <div
+              class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-10 h-10 ring-2 ring-white/30"
+              :style="`background-image: url(${booth.logo || 'https://via.placeholder.com/40'})`"
+            ></div>
+            <div>
+              <p class="text-white text-base font-bold leading-tight">{{ booth.name }}</p>
+              <p v-if="booth.isStreaming" class="text-white/90 text-sm font-medium leading-tight flex items-center gap-1">
+                <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                EN VIVO
+              </p>
+              <p v-else class="text-white/70 text-sm font-normal leading-tight">Offline</p>
+            </div>
+          </div>
+          <button
+            @click="$router.go(-1)"
+            class="flex cursor-pointer items-center justify-center rounded-full w-10 h-10 bg-gray-700 text-white hover:bg-gray-600 transition-colors"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Messages -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-3">
+          <div
+            v-for="message in messages"
+            :key="message.id"
+            class="flex w-full flex-row items-start justify-start gap-2"
+          >
+            <div
+              class="bg-center bg-no-repeat aspect-square bg-cover rounded-full w-8 h-8 shrink-0"
+              :style="`background-image: url(https://ui-avatars.com/api/?name=${encodeURIComponent(message.user?.name || 'User')}&background=random)`"
+            ></div>
+            <div class="flex h-full flex-1 flex-col items-start justify-start rounded-lg bg-gray-800 p-3">
+              <p class="text-white text-sm font-bold">{{ message.user?.name || 'Usuario' }}</p>
+              <p class="text-white text-base font-normal leading-snug">{{ message.content }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Input -->
+        <div class="p-4 bg-gray-800 border-t border-gray-700">
+          <div class="flex items-center gap-3">
+            <input
+              v-model="newComment"
+              @keyup.enter="sendComment"
+              class="h-12 flex-1 rounded-full border-none bg-gray-700 px-4 text-white placeholder-white/60 focus:ring-2 focus:ring-pink-500"
+              placeholder="Escribe un comentario..."
+              type="text"
+            />
+            <button
+              @click="sendComment"
+              :disabled="!newComment.trim()"
+              class="flex shrink-0 items-center justify-center rounded-full w-12 h-12 bg-pink-600 text-white hover:bg-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Products Column -->
+      <div class="flex flex-col w-[45%] bg-gray-800">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-900">
+          <h3 class="text-white text-lg font-bold">Productos</h3>
+          <button
+            @click="showCartModal = true"
+            class="relative flex cursor-pointer items-center justify-center rounded-full w-10 h-10 bg-pink-600 text-white hover:bg-pink-700 transition-colors"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+            <span v-if="cartStore.totalItems > 0" class="absolute -top-1 -right-1 bg-white text-pink-600 text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+              {{ cartStore.totalItems }}
+            </span>
+          </button>
+        </div>
+
+        <!-- Products List -->
+        <div class="flex-1 overflow-y-auto p-4">
+          <div
+            v-for="(product, index) in products"
+            :key="product.id"
+            @click="showProductModal(product)"
+            class="flex flex-row gap-3 rounded-xl cursor-pointer hover:bg-gray-700 transition-all p-3 mb-3"
+            :class="index === selectedProductIndex ? 'ring-2 ring-pink-500 shadow-lg' : ''"
+          >
+            <div
+              class="w-20 h-20 bg-center bg-no-repeat bg-cover rounded-xl shrink-0"
+              :style="`background-image: url(${product.images?.[0] || 'https://via.placeholder.com/64'})`"
+            ></div>
+            <div class="flex flex-col flex-1 justify-center">
+              <p class="text-white text-sm font-semibold line-clamp-2">{{ product.name }}</p>
+              <p class="text-pink-400 text-lg font-bold mt-1">S/ {{ formatPrice(product.price) }}</p>
+              <p v-if="product.stock > 0" class="text-gray-400 text-xs mt-1">Stock: {{ product.stock }}</p>
+              <p v-else class="text-red-400 text-xs font-medium mt-1">Sin stock</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

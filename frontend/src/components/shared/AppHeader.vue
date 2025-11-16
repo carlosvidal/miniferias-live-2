@@ -1,194 +1,49 @@
 <template>
-  <header class="bg-white shadow-sm sticky top-0 z-50">
-    <div class="container mx-auto px-4">
-      <div class="flex items-center justify-between h-16">
-        <!-- Logo -->
-        <router-link to="/" class="flex items-center space-x-2">
-          <span class="text-2xl font-bold text-primary-600">🎪</span>
-          <span class="text-xl font-bold text-gray-900">Miniferias</span>
-        </router-link>
-
-        <!-- Desktop Navigation -->
-        <nav class="hidden md:flex items-center space-x-6">
-          <router-link to="/" class="text-gray-700 hover:text-primary-600">
-            Eventos
-          </router-link>
-
-          <template v-if="authStore.isAuthenticated">
-            <router-link
-              v-if="authStore.isAdmin"
-              to="/admin"
-              class="text-gray-700 hover:text-primary-600"
-            >
-              Admin
-            </router-link>
-
-            <router-link
-              v-if="authStore.isExhibitor"
-              to="/exhibitor"
-              class="text-gray-700 hover:text-primary-600"
-            >
-              Mi Booth
-            </router-link>
-
-            <router-link
-              to="/orders"
-              class="text-gray-700 hover:text-primary-600"
-            >
-              Mis Pedidos
-            </router-link>
-
-            <div class="relative">
-              <button
-                @click="showUserMenu = !showUserMenu"
-                class="flex items-center space-x-2 text-gray-700 hover:text-primary-600"
-              >
-                <span>{{ authStore.user?.name }}</span>
-                <span>▾</span>
-              </button>
-
-              <div
-                v-if="showUserMenu"
-                class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2"
-              >
-                <router-link
-                  to="/profile"
-                  class="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                  @click="showUserMenu = false"
-                >
-                  Perfil
-                </router-link>
-                <button
-                  @click="handleLogout"
-                  class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
-                >
-                  Cerrar Sesión
-                </button>
-              </div>
-            </div>
-          </template>
-
-          <template v-else>
-            <router-link to="/login" class="text-gray-700 hover:text-primary-600">
-              Iniciar Sesión
-            </router-link>
-            <router-link to="/register" class="btn btn-primary">
-              Registrarse
-            </router-link>
-          </template>
-
-          <!-- Cart Badge -->
-          <router-link
-            v-if="cartStore.totalItems > 0"
-            to="/checkout"
-            class="relative"
-          >
-            <span class="text-2xl">🛒</span>
-            <span
-              class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
-            >
-              {{ cartStore.totalItems }}
-            </span>
-          </router-link>
-        </nav>
-
-        <!-- Mobile Menu Button -->
-        <button
-          @click="showMobileMenu = !showMobileMenu"
-          class="md:hidden text-gray-700"
+  <!-- Mobile-First Header -->
+  <header class="sticky top-0 z-20 bg-white/80 backdrop-blur-lg border-b border-gray-200">
+    <div class="max-w-lg lg:max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <router-link to="/" class="flex items-center">
+        <div>
+          <h1 class="text-xl font-bold text-gray-900">Miniferias</h1>
+          <p class="text-xs text-gray-500">Live Shopping</p>
+        </div>
+      </router-link>
+      <div class="flex items-center gap-3">
+        <!-- Cart -->
+        <router-link
+          to="/cart"
+          class="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
         >
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 6h16M4 12h16M4 18h16"
-            />
+          <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          </svg>
+          <span v-if="cartStore.itemCount > 0" class="absolute -top-1 -right-1 bg-pink-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+            {{ cartStore.itemCount }}
+          </span>
+        </router-link>
+        <!-- Profile/Login -->
+        <button
+          v-if="authStore.isAuthenticated"
+          @click="navigateToProfile"
+          class="p-2 rounded-full hover:bg-gray-100 transition-colors"
+        >
+          <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
         </button>
-      </div>
-
-      <!-- Mobile Menu -->
-      <div v-if="showMobileMenu" class="md:hidden py-4 border-t">
-        <router-link
-          to="/"
-          class="block py-2 text-gray-700 hover:text-primary-600"
-          @click="showMobileMenu = false"
+        <button
+          v-else
+          @click="$router.push('/login')"
+          class="px-4 py-1.5 bg-pink-600 text-white text-sm font-medium rounded-full hover:bg-pink-700 transition-colors"
         >
-          Eventos
-        </router-link>
-
-        <template v-if="authStore.isAuthenticated">
-          <router-link
-            v-if="authStore.isAdmin"
-            to="/admin"
-            class="block py-2 text-gray-700 hover:text-primary-600"
-            @click="showMobileMenu = false"
-          >
-            Admin
-          </router-link>
-
-          <router-link
-            v-if="authStore.isExhibitor"
-            to="/exhibitor"
-            class="block py-2 text-gray-700 hover:text-primary-600"
-            @click="showMobileMenu = false"
-          >
-            Mi Booth
-          </router-link>
-
-          <router-link
-            to="/orders"
-            class="block py-2 text-gray-700 hover:text-primary-600"
-            @click="showMobileMenu = false"
-          >
-            Mis Pedidos
-          </router-link>
-
-          <router-link
-            to="/profile"
-            class="block py-2 text-gray-700 hover:text-primary-600"
-            @click="showMobileMenu = false"
-          >
-            Perfil
-          </router-link>
-
-          <button
-            @click="handleLogout"
-            class="block w-full text-left py-2 text-gray-700 hover:text-primary-600"
-          >
-            Cerrar Sesión
-          </button>
-        </template>
-
-        <template v-else>
-          <router-link
-            to="/login"
-            class="block py-2 text-gray-700 hover:text-primary-600"
-            @click="showMobileMenu = false"
-          >
-            Iniciar Sesión
-          </router-link>
-          <router-link
-            to="/register"
-            class="block py-2 text-gray-700 hover:text-primary-600"
-            @click="showMobileMenu = false"
-          >
-            Registrarse
-          </router-link>
-        </template>
+          Ingresar
+        </button>
       </div>
     </div>
   </header>
 </template>
 
 <script setup>
-import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
@@ -197,13 +52,11 @@ const router = useRouter()
 const authStore = useAuthStore()
 const cartStore = useCartStore()
 
-const showUserMenu = ref(false)
-const showMobileMenu = ref(false)
-
-async function handleLogout() {
-  await authStore.logout()
-  showUserMenu.value = false
-  showMobileMenu.value = false
-  router.push('/')
+function navigateToProfile() {
+  if (authStore.user?.role === 'EXHIBITOR') {
+    router.push('/exhibitor/dashboard')
+  } else {
+    router.push('/profile')
+  }
 }
 </script>
