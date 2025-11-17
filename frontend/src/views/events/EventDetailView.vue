@@ -49,8 +49,44 @@
             </span>
           </div>
 
+          <!-- Push Notification Banner -->
+          <div
+            v-if="showPushPrompt && !isSubscribedToPush && notifications.isSupported"
+            class="mt-6 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg p-4 shadow-lg"
+          >
+            <div class="flex items-start justify-between gap-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-2xl">🔔</span>
+                  <h3 class="text-lg font-bold">¡No te pierdas este evento!</h3>
+                </div>
+                <p class="text-sm text-indigo-100 mb-3">
+                  Activa las notificaciones push y te avisaremos cuando el evento esté por empezar.
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    @click="subscribeToPushNotifications"
+                    :disabled="pushLoading"
+                    class="bg-white text-indigo-600 px-4 py-2 rounded-lg font-semibold hover:bg-indigo-50 transition-colors disabled:opacity-50"
+                  >
+                    {{ pushLoading ? 'Activando...' : '🔔 Activar Notificaciones' }}
+                  </button>
+                  <button
+                    @click="dismissPushPrompt"
+                    class="bg-transparent border border-white/30 px-4 py-2 rounded-lg hover:bg-white/10 transition-colors"
+                  >
+                    Ahora no
+                  </button>
+                </div>
+                <p v-if="pushError" class="text-red-200 text-xs mt-2">
+                  {{ pushError }}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <!-- Calendar and Reminder Section -->
-          <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
             <!-- Add to Calendar -->
             <div class="bg-white border border-gray-200 rounded-lg p-4">
               <h3 class="text-lg font-semibold text-gray-900 mb-3">
@@ -71,7 +107,7 @@
             <!-- Email Reminder -->
             <div class="bg-white border border-gray-200 rounded-lg p-4">
               <h3 class="text-lg font-semibold text-gray-900 mb-3">
-                🔔 Recordatorio por Email
+                📧 Recordatorio por Email
               </h3>
               <form @submit.prevent="subscribeReminder" class="flex gap-2">
                 <input
@@ -96,6 +132,46 @@
               <p v-if="reminderSuccess" class="text-green-600 text-xs mt-2">
                 ¡Te enviaremos un recordatorio antes del evento!
               </p>
+            </div>
+
+            <!-- Push Notifications -->
+            <div class="bg-white border border-gray-200 rounded-lg p-4">
+              <h3 class="text-lg font-semibold text-gray-900 mb-3">
+                🔔 Notificaciones Push
+              </h3>
+
+              <!-- Suscrito -->
+              <div v-if="isSubscribedToPush || pushSuccess" class="text-center py-2">
+                <div class="inline-flex items-center gap-2 text-green-600 mb-2">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <span class="font-semibold">Activado</span>
+                </div>
+                <p class="text-xs text-gray-600">
+                  Recibirás notificaciones de este evento
+                </p>
+              </div>
+
+              <!-- No suscrito -->
+              <div v-else>
+                <button
+                  @click="subscribeToPushNotifications"
+                  :disabled="pushLoading || !notifications.isSupported"
+                  class="w-full btn btn-primary btn-sm"
+                >
+                  {{ pushLoading ? 'Activando...' : '🔔 Activar' }}
+                </button>
+                <p v-if="pushError" class="text-red-600 text-xs mt-2">
+                  {{ pushError }}
+                </p>
+                <p v-else-if="!notifications.isSupported" class="text-gray-500 text-xs mt-2">
+                  Tu navegador no soporta notificaciones
+                </p>
+                <p v-else class="text-gray-500 text-xs mt-2">
+                  Te avisaremos cuando empiece el evento
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -134,6 +210,7 @@ import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
 import BoothCard from '@/components/booths/BoothCard.vue'
 import { useImageUpload } from '@/composables/useImageUpload'
 import { useCalendar } from '@/composables/useCalendar'
+import { useNotifications } from '@/composables/useNotifications'
 import { eventsAPI } from '@/services/api'
 
 const route = useRoute()
@@ -141,6 +218,14 @@ const eventsStore = useEventsStore()
 const event = ref(null)
 const { getImageUrl } = useImageUpload()
 const { getCalendarOptions } = useCalendar()
+
+// Notifications functionality
+const notifications = useNotifications()
+const showPushPrompt = ref(false)
+const pushLoading = ref(false)
+const pushSuccess = ref(false)
+const pushError = ref('')
+const isSubscribedToPush = ref(false)
 
 // Calendar functionality
 const calendarOptions = computed(() => {
@@ -153,6 +238,49 @@ const reminderEmail = ref('')
 const reminderLoading = ref(false)
 const reminderSuccess = ref(false)
 const reminderError = ref('')
+
+// Push notifications functions
+async function subscribeToPushNotifications() {
+  if (!event.value) return
+
+  pushLoading.value = true
+  pushError.value = ''
+
+  try {
+    const result = await notifications.subscribeToEvent(event.value.id)
+
+    if (result.success) {
+      pushSuccess.value = true
+      isSubscribedToPush.value = true
+      showPushPrompt.value = false
+    } else {
+      throw new Error(result.error || 'Error al suscribirse')
+    }
+  } catch (error) {
+    console.error('Error subscribing to push notifications:', error)
+    pushError.value = error.message || 'Error al activar notificaciones. Inténtalo de nuevo.'
+  } finally {
+    pushLoading.value = false
+  }
+}
+
+async function checkPushSubscription() {
+  if (!event.value) return
+
+  await notifications.initialize()
+
+  // Verificar si está suscrito a este evento específico
+  isSubscribedToPush.value = await notifications.isSubscribedToEvent(event.value.id)
+
+  // Si no está suscrito y el navegador soporta notificaciones, mostrar prompt
+  if (!isSubscribedToPush.value && notifications.isSupported.value && notifications.notificationPermission.value !== 'denied') {
+    showPushPrompt.value = true
+  }
+}
+
+function dismissPushPrompt() {
+  showPushPrompt.value = false
+}
 
 async function subscribeReminder() {
   if (!event.value || !reminderEmail.value) return
@@ -195,5 +323,10 @@ function getCloudflareImageUrl(imageUrl, variant = 'public') {
 
 onMounted(async () => {
   event.value = await eventsStore.fetchEventBySlug(route.params.slug)
+
+  // Verificar suscripción a notificaciones push
+  if (event.value) {
+    await checkPushSubscription()
+  }
 })
 </script>

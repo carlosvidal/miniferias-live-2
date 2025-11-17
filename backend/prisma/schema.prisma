@@ -54,6 +54,7 @@ model User {
 
   orders            Order[]
   messages          Message[]
+  pushSubscriptions PushSubscription[]
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -73,6 +74,7 @@ model Event {
 
   booths          Booth[]
   reminders       EventReminder[]
+  pushSubscriptions PushSubscription[]
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
@@ -257,4 +259,35 @@ model EventReminder {
   @@index([eventId])
   @@index([email])
   @@index([sentAt])
+}
+
+model PushSubscription {
+  id              String   @id @default(uuid())
+
+  // OneSignal Player ID
+  playerId        String   @unique
+
+  // Evento al que está suscrito
+  eventId         String
+  event           Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  // Usuario (opcional, si está logueado)
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Estado de la suscripción
+  isActive        Boolean  @default(true)
+
+  // Metadata
+  userAgent       String?
+  ipAddress       String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([playerId, eventId]) // Un playerId por evento
+  @@index([eventId])
+  @@index([userId])
+  @@index([playerId])
+  @@index([isActive])
 }
