@@ -6,7 +6,9 @@ import {
   getEventBySlug,
   updateEvent,
   deleteEvent,
-  getEventStats
+  getEventStats,
+  createEventReminder,
+  getEventReminders
 } from '../controllers/events.controller.js';
 import { authenticate, optionalAuth } from '../middleware/auth.middleware.js';
 import { requireAdmin } from '../middleware/role.middleware.js';
@@ -19,6 +21,10 @@ const router = express.Router();
 router.get('/', optionalAuth, getEvents);
 router.get('/slug/:slug', optionalAuth, getEventBySlug);
 router.get('/:id', optionalAuth, getEventById);
+
+// Event reminder routes
+router.post('/:eventId/reminders', createEventReminder);
+router.get('/:eventId/reminders', authenticate, requireAdmin, getEventReminders);
 
 // Admin only routes
 router.post('/', authenticate, requireAdmin, validate(createEventSchema), createEvent);

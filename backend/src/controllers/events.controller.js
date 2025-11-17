@@ -268,3 +268,67 @@ export async function getEventStats(req, res) {
     res.status(500).json({ error: 'Failed to get event stats' });
   }
 }
+
+export async function createEventReminder(req, res) {
+  try {
+    const { eventId } = req.params;
+    const { email } = req.body;
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    // Check if event exists
+    const event = await prisma.event.findUnique({
+      where: { id: eventId }
+    });
+
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    // Create or update reminder (upsert to handle duplicates)
+    const reminder = await prisma.eventReminder.upsert({
+      where: {
+        eventId_email: {
+          eventId,
+          email
+        }
+      },
+      update: {},
+      create: {
+        eventId,
+        email
+      }
+    });
+
+    res.status(201).json({
+      message: 'Reminder registered successfully',
+      reminder
+    });
+  } catch (error) {
+    console.error('Create event reminder error:', error);
+    res.status(500).json({ error: 'Failed to create reminder' });
+  }
+}
+
+export async function getEventReminders(req, res) {
+  try {
+    const { eventId } = req.params;
+
+    const reminders = await prisma.eventReminder.findMany({
+      where: { eventId },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json({
+      reminders,
+      total: reminders.length
+    });
+  } catch (error) {
+    console.error('Get event reminders error:', error);
+    res.status(500).json({ error: 'Failed to get reminders' });
+  }
+}
