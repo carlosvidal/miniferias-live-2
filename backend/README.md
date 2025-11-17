@@ -9,7 +9,9 @@ Backend API for Miniferias Live Shopping Platform built with Node.js, Express, P
 - 📦 RESTful API for Events, Booths, Products, Orders, and Messages
 - 🎥 Agora Live Streaming Integration
 - 💬 Real-time Chat with Supabase Realtime
-- 📧 Email Notifications
+- 📧 Email Notifications (Resend)
+- 📅 Event Calendar Export (iCal, Google Calendar, Outlook)
+- 🔔 Event Email Reminders
 - 🗄️ PostgreSQL Database with Prisma ORM
 - 🔒 Security with Helmet and Rate Limiting
 
@@ -19,6 +21,7 @@ Backend API for Miniferias Live Shopping Platform built with Node.js, Express, P
 - PostgreSQL database (via Supabase or local)
 - Supabase account
 - Agora account (for live streaming)
+- Resend account (for email notifications - free tier: 3,000 emails/month)
 
 ## Setup
 
@@ -82,6 +85,8 @@ The server will start on `http://localhost:3000`
 - `PUT /api/events/:id` - Update event (Admin)
 - `DELETE /api/events/:id` - Delete event (Admin)
 - `GET /api/events/:id/stats` - Get event stats (Admin)
+- `POST /api/events/:eventId/reminders` - Subscribe to event reminders
+- `GET /api/events/:eventId/reminders` - Get event reminders (Admin)
 
 ### Booths
 - `GET /api/booths` - List booths

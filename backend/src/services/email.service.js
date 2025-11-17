@@ -1,44 +1,43 @@
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const nodemailer = require('nodemailer');
+import { Resend } from 'resend';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Lazy initialization - only create transporter when needed
-let transporter = null;
-function getTransporter() {
-  if (!transporter) {
-    transporter = nodemailer.createTransporter({
-      host: 'smtp.sendgrid.net',
-      port: 587,
-      secure: false,
-      auth: {
-        user: 'apikey',
-        pass: process.env.SENDGRID_API_KEY
-      }
-    });
+// Initialize Resend client
+let resend = null;
+function getResendClient() {
+  if (!resend && process.env.RESEND_API_KEY) {
+    resend = new Resend(process.env.RESEND_API_KEY);
   }
-  return transporter;
+  return resend;
 }
 
 export async function sendEmail({ to, subject, html, text }) {
   try {
-    if (!process.env.SENDGRID_API_KEY) {
-      console.log('Email service not configured, skipping email send');
+    const client = getResendClient();
+
+    if (!client) {
+      console.log('Email service not configured (missing RESEND_API_KEY), skipping email send');
       return null;
     }
 
-    const info = await getTransporter().sendMail({
-      from: process.env.FROM_EMAIL || 'noreply@miniferias.pe',
-      to,
+    const fromEmail = process.env.FROM_EMAIL || 'MiniFeria <onboarding@resend.dev>';
+
+    const { data, error } = await client.emails.send({
+      from: fromEmail,
+      to: Array.isArray(to) ? to : [to],
       subject,
       text,
       html
     });
 
-    console.log('Email sent:', info.messageId);
-    return info;
+    if (error) {
+      console.error('Error sending email:', error);
+      throw error;
+    }
+
+    console.log('Email sent successfully:', data.id);
+    return data;
   } catch (error) {
     console.error('Error sending email:', error);
     throw error;
