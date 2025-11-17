@@ -55,7 +55,9 @@ export const eventsAPI = {
   create: (data) => api.post('/events', data),
   update: (id, data) => api.put(`/events/${id}`, data),
   delete: (id) => api.delete(`/events/${id}`),
-  getStats: (id) => api.get(`/events/${id}/stats`)
+  getStats: (id) => api.get(`/events/${id}/stats`),
+  createReminder: (eventId, email) => api.post(`/events/${eventId}/reminders`, { email }),
+  getReminders: (eventId) => api.get(`/events/${eventId}/reminders`)
 }
 
 // Booths API

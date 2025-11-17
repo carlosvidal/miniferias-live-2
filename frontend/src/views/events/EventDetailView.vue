@@ -29,7 +29,7 @@
         <!-- Event Info -->
         <div class="mb-8">
           <div class="flex items-start justify-between">
-            <div>
+            <div class="flex-1">
               <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
                 {{ event.name }}
               </h1>
@@ -47,6 +47,56 @@
             >
               🔴 EN VIVO
             </span>
+          </div>
+
+          <!-- Calendar and Reminder Section -->
+          <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <!-- Add to Calendar -->
+            <div class="bg-white border border-gray-200 rounded-lg p-4">
+              <h3 class="text-lg font-semibold text-gray-900 mb-3">
+                📅 Agregar al Calendario
+              </h3>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-for="option in calendarOptions"
+                  :key="option.name"
+                  @click="option.action"
+                  class="btn btn-secondary btn-sm"
+                >
+                  {{ option.icon }} {{ option.name }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Email Reminder -->
+            <div class="bg-white border border-gray-200 rounded-lg p-4">
+              <h3 class="text-lg font-semibold text-gray-900 mb-3">
+                🔔 Recordatorio por Email
+              </h3>
+              <form @submit.prevent="subscribeReminder" class="flex gap-2">
+                <input
+                  v-model="reminderEmail"
+                  type="email"
+                  placeholder="tu@email.com"
+                  required
+                  class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+                  :disabled="reminderLoading || reminderSuccess"
+                />
+                <button
+                  type="submit"
+                  :disabled="reminderLoading || reminderSuccess"
+                  class="btn btn-primary btn-sm whitespace-nowrap"
+                >
+                  {{ reminderSuccess ? '✓ Suscrito' : 'Suscribirse' }}
+                </button>
+              </form>
+              <p v-if="reminderError" class="text-red-600 text-xs mt-2">
+                {{ reminderError }}
+              </p>
+              <p v-if="reminderSuccess" class="text-green-600 text-xs mt-2">
+                ¡Te enviaremos un recordatorio antes del evento!
+              </p>
+            </div>
           </div>
         </div>
 
@@ -76,18 +126,51 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useEventsStore } from '@/stores/events'
 import AppHeader from '@/components/shared/AppHeader.vue'
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
 import BoothCard from '@/components/booths/BoothCard.vue'
 import { useImageUpload } from '@/composables/useImageUpload'
+import { useCalendar } from '@/composables/useCalendar'
+import { eventsAPI } from '@/services/api'
 
 const route = useRoute()
 const eventsStore = useEventsStore()
 const event = ref(null)
 const { getImageUrl } = useImageUpload()
+const { getCalendarOptions } = useCalendar()
+
+// Calendar functionality
+const calendarOptions = computed(() => {
+  if (!event.value) return []
+  return getCalendarOptions(event.value)
+})
+
+// Email reminder functionality
+const reminderEmail = ref('')
+const reminderLoading = ref(false)
+const reminderSuccess = ref(false)
+const reminderError = ref('')
+
+async function subscribeReminder() {
+  if (!event.value || !reminderEmail.value) return
+
+  reminderLoading.value = true
+  reminderError.value = ''
+
+  try {
+    await eventsAPI.createReminder(event.value.id, reminderEmail.value)
+    reminderSuccess.value = true
+    reminderEmail.value = ''
+  } catch (error) {
+    console.error('Error subscribing to reminder:', error)
+    reminderError.value = error.response?.data?.error || 'Error al suscribirse. Inténtalo de nuevo.'
+  } finally {
+    reminderLoading.value = false
+  }
+}
 
 function formatDate(dateString) {
   const date = new Date(dateString)

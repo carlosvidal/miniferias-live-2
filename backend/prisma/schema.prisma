@@ -72,6 +72,7 @@ model Event {
   isLive          Boolean     @default(false)
 
   booths          Booth[]
+  reminders       EventReminder[]
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
@@ -238,4 +239,22 @@ model BoothMember {
   @@unique([userId, boothId]) // A user can only have one role per booth
   @@index([boothId])
   @@index([userId])
+}
+
+model EventReminder {
+  id        String   @id @default(uuid())
+
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  email     String
+  sentAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([eventId, email]) // One reminder per email per event
+  @@index([eventId])
+  @@index([email])
+  @@index([sentAt])
 }
