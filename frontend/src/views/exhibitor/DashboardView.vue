@@ -15,6 +15,12 @@
 
     <!-- Main Content -->
     <div v-else class="pb-4">
+      <!-- Page Header -->
+      <div class="px-4 md:px-6 pt-4 pb-2">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Panel de Control</h1>
+        <p class="text-sm text-gray-600 mt-1">Gestiona tu booth y tus ventas</p>
+      </div>
+
       <!-- Stats Cards - Responsive Grid -->
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 p-4 md:p-6">
         <!-- Total Sales -->

@@ -1,5 +1,11 @@
 <template>
   <div class="min-h-screen bg-gray-50 pb-20">
+    <!-- Page Header -->
+    <div class="px-4 md:px-6 pt-4 pb-2">
+      <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Productos</h1>
+      <p class="text-sm text-gray-600 mt-1">Gestiona los productos de tu booth</p>
+    </div>
+
     <!-- Loading State -->
     <div v-if="loading && !products.length" class="flex items-center justify-center py-12">
       <LoadingSpinner />

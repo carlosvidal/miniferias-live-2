@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="text-3xl font-bold mb-6">Configuración de Mi Booth</h1>
+    <h1 class="text-3xl font-bold mb-6">Mi Booth</h1>
 
     <!-- Loading State -->
     <div v-if="loading" class="text-center py-12">
