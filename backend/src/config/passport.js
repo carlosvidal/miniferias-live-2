@@ -2,7 +2,7 @@ import passport from 'passport'
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 import { Strategy as FacebookStrategy } from 'passport-facebook'
 import { Strategy as OAuth2Strategy } from 'passport-oauth2'
-import prisma from '../config/database.js'
+import prisma from './prisma.js'
 
 /**
  * Configure Google OAuth Strategy
