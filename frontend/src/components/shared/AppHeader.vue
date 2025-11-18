@@ -9,18 +9,6 @@
         </div>
       </router-link>
       <div class="flex items-center gap-3">
-        <!-- Cart -->
-        <router-link
-          to="/cart"
-          class="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
-        >
-          <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-          </svg>
-          <span v-if="cartStore.itemCount > 0" class="absolute -top-1 -right-1 bg-pink-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-            {{ cartStore.itemCount }}
-          </span>
-        </router-link>
         <!-- Profile/Login -->
         <button
           v-if="authStore.isAuthenticated"
@@ -46,11 +34,9 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useCartStore } from '@/stores/cart'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const cartStore = useCartStore()
 
 function navigateToProfile() {
   if (authStore.user?.role === 'EXHIBITOR') {
