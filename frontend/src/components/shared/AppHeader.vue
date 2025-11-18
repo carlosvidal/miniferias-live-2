@@ -9,18 +9,9 @@
         </div>
       </router-link>
       <div class="flex items-center gap-3">
-        <!-- Profile/Login -->
+        <!-- Login button only for non-authenticated users -->
         <button
-          v-if="authStore.isAuthenticated"
-          @click="navigateToProfile"
-          class="p-2 rounded-full hover:bg-white/10 transition-colors"
-        >
-          <svg class="w-6 h-6 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
-        </button>
-        <button
-          v-else
+          v-if="!authStore.isAuthenticated"
           @click="$router.push('/login')"
           class="px-4 py-1.5 bg-pink-500 text-white text-sm font-medium rounded-full hover:bg-pink-600 transition-colors"
         >

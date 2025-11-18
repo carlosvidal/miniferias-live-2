@@ -1,5 +1,11 @@
 <template>
   <div class="min-h-screen bg-gray-50 pb-6">
+    <!-- Page Header -->
+    <div class="px-4 md:px-6 pt-4 pb-2">
+      <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Pedidos</h1>
+      <p class="text-sm text-gray-600 mt-1">Gestiona los pedidos de tu booth</p>
+    </div>
+
     <!-- Filters - Horizontal Scroll -->
     <div class="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 md:px-6 py-3 -mx-4">
       <div class="flex gap-2 overflow-x-auto md:justify-center pb-1 scrollbar-hide">
