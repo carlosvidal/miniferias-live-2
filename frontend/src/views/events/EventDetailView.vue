@@ -16,32 +16,24 @@
     <div v-else-if="event">
       <!-- Floating Header -->
       <header class="absolute top-0 z-20 flex w-full items-center justify-between p-4">
-        <button
-          @click="goBack"
-          class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm hover:bg-black/40 transition-colors"
-        >
+        <button @click="goBack"
+          class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm hover:bg-black/40 transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <button
-          v-if="webShareApiSupported"
-          @click="shareEvent"
-          :disabled="shareLoading"
-          class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm hover:bg-black/40 transition-colors disabled:opacity-50"
-        >
+        <button v-if="webShareApiSupported" @click="shareEvent" :disabled="shareLoading"
+          class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm hover:bg-black/40 transition-colors disabled:opacity-50">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
           </svg>
         </button>
-        <button
-          v-else
-          @click="copyEventLink"
-          :disabled="copyLoading"
-          class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm hover:bg-black/40 transition-colors disabled:opacity-50"
-        >
+        <button v-else @click="copyEventLink" :disabled="copyLoading"
+          class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm hover:bg-black/40 transition-colors disabled:opacity-50">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
           </svg>
         </button>
       </header>
@@ -51,24 +43,16 @@
         <!-- Hero Image with Gradient -->
         <div class="relative h-96 w-full">
           <!-- Cover Image -->
-          <div
-            v-if="event.coverImage"
-            class="absolute inset-0 bg-cover bg-center"
-            :style="{ backgroundImage: `url(${getCloudflareImageUrl(event.coverImage, 'cover')})` }"
-          ></div>
-          <div
-            v-else
-            class="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500"
-          ></div>
+          <div v-if="event.coverImage" class="absolute inset-0 bg-cover bg-center"
+            :style="{ backgroundImage: `url(${getCloudflareImageUrl(event.coverImage, 'cover')})` }"></div>
+          <div v-else class="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500"></div>
 
           <!-- Gradient Overlay -->
           <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/70 to-transparent"></div>
 
           <!-- Live Badge -->
-          <div
-            v-if="event.isLive"
-            class="absolute top-20 left-4 px-4 py-2 bg-red-500 text-white rounded-full text-sm font-bold flex items-center gap-2 shadow-lg z-10"
-          >
+          <div v-if="event.isLive"
+            class="absolute top-20 left-4 px-4 py-2 bg-red-500 text-white rounded-full text-sm font-bold flex items-center gap-2 shadow-lg z-10">
             <span class="w-2 h-2 bg-white rounded-full animate-pulse"></span>
             EN VIVO
           </div>
@@ -88,18 +72,17 @@
 
           <!-- Date/Time Card -->
           <div class="flex items-center gap-4 rounded-xl bg-white/10 backdrop-blur-sm p-4 shadow-lg">
-            <svg class="w-8 h-8 md:w-10 md:h-10 text-pink-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <svg class="w-8 h-8 md:w-10 md:h-10 text-pink-500 flex-shrink-0" fill="none" stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             <div class="flex-grow">
               <p class="font-bold text-white text-base md:text-lg">{{ formatEventDate(event.startDate) }}</p>
               <p class="text-sm text-gray-300">{{ formatEventTime(event.startDate) }}</p>
             </div>
-            <button
-              v-if="calendarOptions.length > 0"
-              @click="addToCalendar"
-              class="flex shrink-0 items-center justify-center gap-2 rounded-full bg-pink-500 px-4 py-2 text-sm font-bold text-white hover:bg-pink-600 transition-colors"
-            >
+            <button v-if="calendarOptions.length > 0" @click="addToCalendar"
+              class="flex shrink-0 items-center justify-center gap-2 rounded-full bg-pink-500 px-4 py-2 text-sm font-bold text-white hover:bg-pink-600 transition-colors">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
@@ -116,23 +99,15 @@
               <label class="mb-2 block text-sm font-medium text-gray-300" for="email">
                 Recibir recordatorio por email
               </label>
-              <form @submit.prevent="subscribeReminder" class="flex gap-2">
-                <input
-                  v-model="reminderEmail"
-                  type="email"
-                  id="email"
-                  placeholder="tuemail@ejemplo.com"
-                  required
+              <form @submit.prevent="subscribeReminder" class="flex">
+                <input v-model="reminderEmail" type="email" id="email" placeholder="tuemail@ejemplo.com" required
                   :disabled="reminderLoading || reminderSuccess"
-                  class="form-input h-12 flex-grow rounded-l-lg border-0 bg-black/20 text-white placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-pink-500"
-                />
-                <button
-                  type="submit"
-                  :disabled="reminderLoading || reminderSuccess"
-                  class="flex h-12 items-center justify-center rounded-r-lg bg-pink-500 px-4 font-bold text-white hover:bg-pink-600 transition-colors disabled:opacity-50"
-                >
+                  class="form-input h-12  px-4 py-2 flex-grow rounded-l-lg border-0 bg-black/20 text-white placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-pink-500" />
+                <button type="submit" :disabled="reminderLoading || reminderSuccess"
+                  class="flex h-12 items-center justify-center rounded-r-lg bg-pink-500 px-4 font-bold text-white hover:bg-pink-600 transition-colors disabled:opacity-50">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M14 5l7 7m0 0l-7 7m7-7H3" />
                   </svg>
                 </button>
               </form>
@@ -145,25 +120,21 @@
             </div>
 
             <!-- Push Notifications Toggle -->
-            <div
-              v-if="notifications.isSupported"
-              class="flex items-center justify-between rounded-lg bg-black/20 p-3 md:p-4"
-            >
+            <div v-if="notifications.isSupported"
+              class="flex items-center justify-between rounded-lg bg-black/20 p-3 md:p-4">
               <div class="flex items-center gap-3">
                 <svg class="w-6 h-6 text-pink-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
                 <p class="text-sm font-medium text-white">Activar Push Notifications</p>
               </div>
               <label class="relative inline-flex cursor-pointer items-center">
-                <input
-                  type="checkbox"
-                  :checked="isSubscribedToPush || pushSuccess"
-                  @change="togglePushNotifications"
-                  :disabled="pushLoading"
-                  class="sr-only peer"
-                />
-                <div class="peer h-6 w-11 rounded-full bg-gray-600 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-pink-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-disabled:opacity-50"></div>
+                <input type="checkbox" :checked="isSubscribedToPush || pushSuccess" @change="togglePushNotifications"
+                  :disabled="pushLoading" class="sr-only peer" />
+                <div
+                  class="peer h-6 w-11 rounded-full bg-gray-600 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-pink-500 peer-checked:after:translate-x-full peer-checked:after:border-white peer-disabled:opacity-50">
+                </div>
               </label>
             </div>
             <p v-if="pushError" class="text-red-400 text-xs">
@@ -185,11 +156,7 @@
 
             <!-- Booths Grid -->
             <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              <BoothCard
-                v-for="booth in event.booths"
-                :key="booth.id"
-                :booth="booth"
-              />
+              <BoothCard v-for="booth in event.booths" :key="booth.id" :booth="booth" />
             </div>
           </div>
         </div>
@@ -437,7 +404,7 @@ onMounted(async () => {
 
 <style scoped>
 /* Custom styles for the toggle switch animation */
-.peer:checked ~ div {
+.peer:checked~div {
   background-color: #ec4899;
 }
 </style>
