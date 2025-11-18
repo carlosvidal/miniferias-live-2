@@ -60,8 +60,10 @@
           </router-link>
 
           <!-- Live Stream -->
-          <router-link
-            to="/exhibitor/live"
+          <a
+            href="/exhibitor/live"
+            target="_blank"
+            rel="noopener noreferrer"
             class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative"
             :class="isActive('live') ? 'bg-purple-50 text-purple-600 font-medium' : 'text-gray-700 hover:bg-gray-50'"
           >
@@ -70,7 +72,7 @@
             </svg>
             <span class="text-sm">En Vivo</span>
             <span v-if="isStreaming" class="ml-auto w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-          </router-link>
+          </a>
         </div>
       </nav>
 
@@ -243,8 +245,10 @@
           </router-link>
 
           <!-- Live Stream -->
-          <router-link
-            to="/exhibitor/live"
+          <a
+            href="/exhibitor/live"
+            target="_blank"
+            rel="noopener noreferrer"
             class="flex flex-col items-center justify-center gap-1 transition-colors relative"
             :class="isActive('live') ? 'text-purple-600' : 'text-gray-500 hover:text-gray-700'"
           >
@@ -253,7 +257,7 @@
             </svg>
             <span class="text-xs font-medium">En Vivo</span>
             <span v-if="isStreaming" class="absolute top-1 right-6 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-          </router-link>
+          </a>
         </div>
       </nav>
     </div>
