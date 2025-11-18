@@ -86,7 +86,7 @@
           </div>
 
           <!-- Calendar and Reminder Section -->
-          <div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4">
             <!-- Add to Calendar -->
             <div class="bg-white border border-gray-200 rounded-lg p-4">
               <h3 class="text-lg font-semibold text-gray-900 mb-3">
@@ -173,6 +173,50 @@
                 </p>
               </div>
             </div>
+
+            <!-- Share Event -->
+            <div class="bg-white border border-gray-200 rounded-lg p-4">
+              <h3 class="text-lg font-semibold text-gray-900 mb-3">
+                🔗 Compartir Evento
+              </h3>
+
+              <!-- Share Button -->
+              <div v-if="webShareApiSupported">
+                <button
+                  @click="shareEvent"
+                  :disabled="shareLoading"
+                  class="w-full btn btn-primary btn-sm"
+                >
+                  {{ shareLoading ? 'Compartiendo...' : '📤 Compartir' }}
+                </button>
+                <p v-if="shareSuccess" class="text-green-600 text-xs mt-2">
+                  ¡Compartido exitosamente!
+                </p>
+                <p v-if="shareError" class="text-red-600 text-xs mt-2">
+                  {{ shareError }}
+                </p>
+                <p v-else class="text-gray-500 text-xs mt-2">
+                  Comparte este evento con tus amigos
+                </p>
+              </div>
+
+              <!-- Fallback for unsupported browsers -->
+              <div v-else>
+                <button
+                  @click="copyEventLink"
+                  :disabled="copyLoading"
+                  class="w-full btn btn-secondary btn-sm"
+                >
+                  {{ copySuccess ? '✓ Copiado' : '📋 Copiar Link' }}
+                </button>
+                <p v-if="copySuccess" class="text-green-600 text-xs mt-2">
+                  ¡Link copiado al portapapeles!
+                </p>
+                <p v-else class="text-gray-500 text-xs mt-2">
+                  Copia el link para compartir
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -239,6 +283,18 @@ const reminderLoading = ref(false)
 const reminderSuccess = ref(false)
 const reminderError = ref('')
 
+// Share functionality
+const shareLoading = ref(false)
+const shareSuccess = ref(false)
+const shareError = ref('')
+const copyLoading = ref(false)
+const copySuccess = ref(false)
+
+// Check for Web Share API support
+const webShareApiSupported = computed(() => {
+  return typeof navigator !== 'undefined' && 'share' in navigator
+})
+
 // Push notifications functions
 async function subscribeToPushNotifications() {
   if (!event.value) return
@@ -297,6 +353,79 @@ async function subscribeReminder() {
     reminderError.value = error.response?.data?.error || 'Error al suscribirse. Inténtalo de nuevo.'
   } finally {
     reminderLoading.value = false
+  }
+}
+
+// Share event using Web Share API
+async function shareEvent() {
+  if (!event.value || !webShareApiSupported.value) return
+
+  shareLoading.value = true
+  shareError.value = ''
+  shareSuccess.value = false
+
+  try {
+    const shareData = {
+      title: event.value.name,
+      text: `¡Mira este evento! ${event.value.description}`,
+      url: window.location.href
+    }
+
+    await navigator.share(shareData)
+    shareSuccess.value = true
+
+    // Reset success message after 3 seconds
+    setTimeout(() => {
+      shareSuccess.value = false
+    }, 3000)
+  } catch (error) {
+    // User cancelled the share dialog or error occurred
+    if (error.name !== 'AbortError') {
+      console.error('Error sharing:', error)
+      shareError.value = 'Error al compartir. Inténtalo de nuevo.'
+    }
+  } finally {
+    shareLoading.value = false
+  }
+}
+
+// Fallback: Copy event link to clipboard
+async function copyEventLink() {
+  if (!event.value) return
+
+  copyLoading.value = true
+  copySuccess.value = false
+
+  try {
+    await navigator.clipboard.writeText(window.location.href)
+    copySuccess.value = true
+
+    // Reset success message after 3 seconds
+    setTimeout(() => {
+      copySuccess.value = false
+    }, 3000)
+  } catch (error) {
+    console.error('Error copying to clipboard:', error)
+    // Fallback for older browsers
+    try {
+      const textArea = document.createElement('textarea')
+      textArea.value = window.location.href
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-999999px'
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      copySuccess.value = true
+
+      setTimeout(() => {
+        copySuccess.value = false
+      }, 3000)
+    } catch (fallbackError) {
+      console.error('Fallback copy failed:', fallbackError)
+    }
+  } finally {
+    copyLoading.value = false
   }
 }
 
