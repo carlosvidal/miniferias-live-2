@@ -1,5 +1,7 @@
 <template>
   <div class="relative flex w-full flex-col min-h-screen bg-gray-900">
+    <AppHeader />
+
     <!-- Loading State -->
     <div v-if="eventsStore.loading" class="flex items-center justify-center min-h-screen">
       <LoadingSpinner />
@@ -14,8 +16,8 @@
 
     <!-- Event Content -->
     <div v-else-if="event">
-      <!-- Floating Header -->
-      <header class="absolute top-0 z-20 flex w-full items-center justify-between p-4">
+      <!-- Floating Back/Share Buttons -->
+      <header class="absolute top-16 z-20 flex w-full items-center justify-between p-4">
         <button @click="goBack"
           class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-black/30 text-white backdrop-blur-sm hover:bg-black/40 transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,6 +171,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useEventsStore } from '@/stores/events'
+import AppHeader from '@/components/shared/AppHeader.vue'
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
 import BoothCard from '@/components/booths/BoothCard.vue'
 import { useImageUpload } from '@/composables/useImageUpload'
