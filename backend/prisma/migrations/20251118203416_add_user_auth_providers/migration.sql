@@ -25,9 +25,9 @@ ALTER TABLE "UserAuthProvider" ADD CONSTRAINT "UserAuthProvider_userId_fkey" FOR
 INSERT INTO "UserAuthProvider" ("id", "userId", "provider", "providerId", "createdAt")
 SELECT
     gen_random_uuid(),
-    id,
-    provider,
-    COALESCE(providerId, id),  -- Use providerId if exists, otherwise use userId as fallback
+    "id",
+    "provider",
+    COALESCE("providerId", "id"),  -- Use providerId if exists, otherwise use userId as fallback
     "createdAt"
 FROM "User"
-WHERE provider IS NOT NULL;
+WHERE "provider" IS NOT NULL;
