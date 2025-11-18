@@ -131,9 +131,9 @@
           </button>
         </div>
 
-        <!-- Desktop Header - using AppHeader component -->
-        <div class="hidden md:block">
-          <AppHeader />
+        <!-- Desktop Header - Simple notification area -->
+        <div class="hidden md:flex items-center justify-end px-6 h-16">
+          <!-- Could add notifications or other actions here if needed -->
         </div>
       </header>
 
@@ -211,7 +211,6 @@
 import { ref } from 'vue'
 import { RouterView, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import AppHeader from '@/components/shared/AppHeader.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
