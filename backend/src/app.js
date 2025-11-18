@@ -5,6 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 import dotenv from 'dotenv';
+import passport from './config/passport.js';
 
 // Import routes
 import authRoutes from './routes/auth.routes.js';
@@ -52,6 +53,9 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Initialize Passport
+app.use(passport.initialize());
 
 // Rate limiting
 const limiter = rateLimit({

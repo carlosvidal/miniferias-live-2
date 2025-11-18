@@ -37,6 +37,10 @@
     "joi": "^17.11.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
+    "passport": "^0.7.0",
+    "passport-facebook": "^3.0.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-oauth2": "^1.8.0",
     "resend": "^6.4.2",
     "uuid": "^9.0.1"
   },

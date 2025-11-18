@@ -15,6 +15,13 @@ enum UserRole {
   VISITOR
 }
 
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  FACEBOOK
+  TIKTOK
+}
+
 enum OrderStatus {
   PENDING
   CONFIRMED
@@ -38,16 +45,20 @@ enum BoothRole {
 }
 
 model User {
-  id                String    @id @default(uuid())
-  email             String    @unique
+  id                String        @id @default(uuid())
+  email             String        @unique
   name              String
   phone             String?
-  role              UserRole  @default(VISITOR)
+  role              UserRole      @default(VISITOR)
   profilePicture    String?
-  password          String    // Hashed password
+  password          String?       // Hashed password (optional for social login)
+
+  // Social login
+  provider          AuthProvider  @default(LOCAL)
+  providerId        String?       // ID from social provider (Google, Facebook, TikTok)
 
   // Visitor data
-  shippingAddress   Json?     // Reutilizable
+  shippingAddress   Json?         // Reutilizable
 
   // Many-to-Many with Booth (can be member of multiple booths)
   boothMemberships  BoothMember[]
@@ -55,10 +66,12 @@ model User {
   orders            Order[]
   messages          Message[]
   pushSubscriptions PushSubscription[]
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
+  @@unique([provider, providerId])
   @@index([email])
+  @@index([provider, providerId])
 }
 
 model Event {

@@ -168,3 +168,39 @@ export async function updateProfile(req, res) {
     res.status(500).json({ error: 'Failed to update profile' });
   }
 }
+
+/**
+ * OAuth callback handler - handles successful OAuth authentication
+ * Creates JWT token and redirects to frontend with token
+ */
+export async function oauthCallback(req, res) {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    );
+
+    // Redirect to frontend with token
+    // The frontend will extract the token from the URL and store it
+    const redirectUrl = `${process.env.FRONTEND_URL}/auth/callback?token=${token}`;
+    res.redirect(redirectUrl);
+  } catch (error) {
+    console.error('OAuth callback error:', error);
+    res.redirect(`${process.env.FRONTEND_URL}/login?error=callback_failed`);
+  }
+}
+
+/**
+ * OAuth failure handler
+ */
+export async function oauthFailure(req, res) {
+  res.redirect(`${process.env.FRONTEND_URL}/login?error=oauth_failed`);
+}
