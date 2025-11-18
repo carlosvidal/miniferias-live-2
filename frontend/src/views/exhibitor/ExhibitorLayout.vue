@@ -32,6 +32,18 @@
             <span class="text-sm">Inicio</span>
           </router-link>
 
+          <!-- Mi Booth -->
+          <router-link
+            to="/exhibitor/booth"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors"
+            :class="isActive('booth') ? 'bg-purple-50 text-purple-600 font-medium' : 'text-gray-700 hover:bg-gray-50'"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span class="text-sm">Mi Booth</span>
+          </router-link>
+
           <!-- Products -->
           <router-link
             to="/exhibitor/products"
@@ -78,15 +90,6 @@
 
       <!-- Bottom Actions -->
       <div class="p-3 border-t border-gray-200 space-y-1">
-        <router-link
-          to="/exhibitor/booth"
-          class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-          <span class="text-sm">Mi Booth</span>
-        </router-link>
 
         <router-link
           to="/profile"
@@ -149,16 +152,6 @@
         <Transition name="slide-down">
           <div v-if="showMenu" class="absolute right-4 top-16 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
             <router-link
-              to="/exhibitor/booth"
-              class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-              @click="showMenu = false"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              Mi Booth
-            </router-link>
-            <router-link
               to="/profile"
               class="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
               @click="showMenu = false"
@@ -202,17 +195,29 @@
 
       <!-- Bottom Navigation Bar - Mobile Only -->
       <nav v-if="!isLiveStreamRoute || !isStreaming" class="md:hidden sticky bottom-0 z-40 bg-white border-t border-gray-200 safe-area-bottom">
-        <div class="grid grid-cols-4 h-16">
+        <div class="grid grid-cols-5 h-16">
           <!-- Dashboard -->
           <router-link
             to="/exhibitor"
             class="flex flex-col items-center justify-center gap-1 transition-colors"
             :class="isActive('') ? 'text-purple-600' : 'text-gray-500 hover:text-gray-700'"
           >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
             <span class="text-xs font-medium">Inicio</span>
+          </router-link>
+
+          <!-- Mi Booth -->
+          <router-link
+            to="/exhibitor/booth"
+            class="flex flex-col items-center justify-center gap-1 transition-colors"
+            :class="isActive('booth') ? 'text-purple-600' : 'text-gray-500 hover:text-gray-700'"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span class="text-xs font-medium">Booth</span>
           </router-link>
 
           <!-- Products -->
@@ -221,7 +226,7 @@
             class="flex flex-col items-center justify-center gap-1 transition-colors"
             :class="isActive('products') ? 'text-purple-600' : 'text-gray-500 hover:text-gray-700'"
           >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
             <span class="text-xs font-medium">Productos</span>
@@ -233,11 +238,11 @@
             class="flex flex-col items-center justify-center gap-1 transition-colors relative"
             :class="isActive('orders') ? 'text-purple-600' : 'text-gray-500 hover:text-gray-700'"
           >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
             <span class="text-xs font-medium">Pedidos</span>
-            <span v-if="pendingOrdersCount > 0" class="absolute top-1 right-6 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+            <span v-if="pendingOrdersCount > 0" class="absolute top-1 right-4 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
               {{ pendingOrdersCount }}
             </span>
           </router-link>
@@ -250,11 +255,11 @@
             class="flex flex-col items-center justify-center gap-1 transition-colors relative"
             :class="isActive('live') ? 'text-purple-600' : 'text-gray-500 hover:text-gray-700'"
           >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
             <span class="text-xs font-medium">En Vivo</span>
-            <span v-if="isStreaming" class="absolute top-1 right-6 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+            <span v-if="isStreaming" class="absolute top-1 right-4 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
           </a>
         </div>
       </nav>
