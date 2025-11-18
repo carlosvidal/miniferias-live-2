@@ -4,6 +4,7 @@ const require = createRequire(import.meta.url);
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const session = require('express-session');
 import dotenv from 'dotenv';
 import passport from './config/passport.js';
 
@@ -53,6 +54,18 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Session middleware (needed for linking OAuth providers)
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'miniferias-session-secret-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+    httpOnly: true,
+    maxAge: 10 * 60 * 1000 // 10 minutes - enough for OAuth flow
+  }
+}));
 
 // Initialize Passport
 app.use(passport.initialize());

@@ -25,32 +25,47 @@ passport.use(
           return done(new Error('No email found in Google profile'), null)
         }
 
-        // Find or create user
-        let user = await prisma.user.findUnique({
+        // Check if this specific Google account is already linked
+        const authProvider = await prisma.userAuthProvider.findUnique({
           where: {
             provider_providerId: {
               provider: 'GOOGLE',
               providerId: profile.id
             }
-          }
+          },
+          include: { user: true }
         })
 
-        if (!user) {
-          // Check if email already exists with different provider
+        let user = null
+
+        if (authProvider) {
+          // User found by Google provider
+          user = authProvider.user
+        } else {
+          // Check if email already exists (user registered with different method)
           const existingUser = await prisma.user.findUnique({
             where: { email }
           })
 
           if (existingUser) {
             // Link Google account to existing user
-            user = await prisma.user.update({
-              where: { id: existingUser.id },
+            await prisma.userAuthProvider.create({
               data: {
+                userId: existingUser.id,
                 provider: 'GOOGLE',
-                providerId: profile.id,
-                profilePicture: profilePicture || existingUser.profilePicture
+                providerId: profile.id
               }
             })
+
+            // Update profile picture if they don't have one
+            if (!existingUser.profilePicture && profilePicture) {
+              await prisma.user.update({
+                where: { id: existingUser.id },
+                data: { profilePicture }
+              })
+            }
+
+            user = existingUser
           } else {
             // Create new user
             user = await prisma.user.create({
@@ -60,7 +75,13 @@ passport.use(
                 provider: 'GOOGLE',
                 providerId: profile.id,
                 profilePicture,
-                role: 'VISITOR' // Default role for social login
+                role: 'VISITOR',
+                authProviders: {
+                  create: {
+                    provider: 'GOOGLE',
+                    providerId: profile.id
+                  }
+                }
               }
             })
           }
@@ -96,32 +117,47 @@ passport.use(
           return done(new Error('No email found in Facebook profile'), null)
         }
 
-        // Find or create user
-        let user = await prisma.user.findUnique({
+        // Check if this specific Facebook account is already linked
+        const authProvider = await prisma.userAuthProvider.findUnique({
           where: {
             provider_providerId: {
               provider: 'FACEBOOK',
               providerId: profile.id
             }
-          }
+          },
+          include: { user: true }
         })
 
-        if (!user) {
-          // Check if email already exists with different provider
+        let user = null
+
+        if (authProvider) {
+          // User found by Facebook provider
+          user = authProvider.user
+        } else {
+          // Check if email already exists (user registered with different method)
           const existingUser = await prisma.user.findUnique({
             where: { email }
           })
 
           if (existingUser) {
             // Link Facebook account to existing user
-            user = await prisma.user.update({
-              where: { id: existingUser.id },
+            await prisma.userAuthProvider.create({
               data: {
+                userId: existingUser.id,
                 provider: 'FACEBOOK',
-                providerId: profile.id,
-                profilePicture: profilePicture || existingUser.profilePicture
+                providerId: profile.id
               }
             })
+
+            // Update profile picture if they don't have one
+            if (!existingUser.profilePicture && profilePicture) {
+              await prisma.user.update({
+                where: { id: existingUser.id },
+                data: { profilePicture }
+              })
+            }
+
+            user = existingUser
           } else {
             // Create new user
             user = await prisma.user.create({
@@ -131,7 +167,13 @@ passport.use(
                 provider: 'FACEBOOK',
                 providerId: profile.id,
                 profilePicture,
-                role: 'VISITOR'
+                role: 'VISITOR',
+                authProviders: {
+                  create: {
+                    provider: 'FACEBOOK',
+                    providerId: profile.id
+                  }
+                }
               }
             })
           }
@@ -187,17 +229,23 @@ passport.use(
         // The user will need to update their email later
         const email = `tiktok_${providerId}@miniferias.temp`
 
-        // Find or create user
-        let user = await prisma.user.findUnique({
+        // Check if this specific TikTok account is already linked
+        const authProvider = await prisma.userAuthProvider.findUnique({
           where: {
             provider_providerId: {
               provider: 'TIKTOK',
               providerId
             }
-          }
+          },
+          include: { user: true }
         })
 
-        if (!user) {
+        let user = null
+
+        if (authProvider) {
+          // User found by TikTok provider
+          user = authProvider.user
+        } else {
           // Create new user (TikTok users will have temp email)
           user = await prisma.user.create({
             data: {
@@ -206,7 +254,13 @@ passport.use(
               provider: 'TIKTOK',
               providerId,
               profilePicture,
-              role: 'VISITOR'
+              role: 'VISITOR',
+              authProviders: {
+                create: {
+                  provider: 'TIKTOK',
+                  providerId
+                }
+              }
             }
           })
         }

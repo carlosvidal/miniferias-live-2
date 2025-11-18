@@ -113,8 +113,15 @@ export async function getMe(req, res) {
         role: true,
         phone: true,
         profilePicture: true,
+        provider: true,
         shippingAddress: true,
         createdAt: true,
+        authProviders: {
+          select: {
+            provider: true,
+            createdAt: true
+          }
+        },
         boothMemberships: {
           include: {
             booth: {
@@ -203,4 +210,137 @@ export async function oauthCallback(req, res) {
  */
 export async function oauthFailure(req, res) {
   res.redirect(`${process.env.FRONTEND_URL}/login?error=oauth_failed`);
+}
+
+/**
+ * OAuth callback for linking providers - handles authenticated users linking additional providers
+ */
+export async function oauthLinkCallback(req, res) {
+  try {
+    const authenticatedUser = req.user; // This comes from Passport OAuth
+    const existingUserId = req.session?.linkingUserId; // User ID stored in session before OAuth
+
+    if (!authenticatedUser) {
+      return res.redirect(`${process.env.FRONTEND_URL}/profile?error=link_failed`);
+    }
+
+    if (!existingUserId) {
+      return res.redirect(`${process.env.FRONTEND_URL}/profile?error=no_session`);
+    }
+
+    // Get the provider info from the OAuth user
+    const provider = authenticatedUser.provider;
+    const providerId = authenticatedUser.providerId;
+
+    // Check if this provider is already linked to another user
+    const existingLink = await prisma.userAuthProvider.findUnique({
+      where: {
+        provider_providerId: {
+          provider,
+          providerId
+        }
+      }
+    });
+
+    if (existingLink && existingLink.userId !== existingUserId) {
+      return res.redirect(`${process.env.FRONTEND_URL}/profile?error=provider_already_linked`);
+    }
+
+    if (!existingLink) {
+      // Link the provider to the existing user
+      await prisma.userAuthProvider.create({
+        data: {
+          userId: existingUserId,
+          provider,
+          providerId
+        }
+      });
+    }
+
+    // Clear session
+    delete req.session.linkingUserId;
+
+    // Redirect to profile with success
+    res.redirect(`${process.env.FRONTEND_URL}/profile?linked=${provider.toLowerCase()}`);
+  } catch (error) {
+    console.error('OAuth link callback error:', error);
+    res.redirect(`${process.env.FRONTEND_URL}/profile?error=link_callback_failed`);
+  }
+}
+
+/**
+ * Unlink an authentication provider
+ */
+export async function unlinkProvider(req, res) {
+  try {
+    const { provider } = req.params;
+    const userId = req.user.id;
+
+    // Validate provider
+    const validProviders = ['GOOGLE', 'FACEBOOK', 'TIKTOK', 'LOCAL'];
+    if (!validProviders.includes(provider.toUpperCase())) {
+      return res.status(400).json({ error: 'Invalid provider' });
+    }
+
+    const providerEnum = provider.toUpperCase();
+
+    // Check how many auth providers the user has
+    const authProviders = await prisma.userAuthProvider.findMany({
+      where: { userId }
+    });
+
+    // Don't allow unlinking if it's the only auth method
+    if (authProviders.length <= 1) {
+      return res.status(400).json({
+        error: 'Cannot unlink the only authentication method. Please link another provider first.'
+      });
+    }
+
+    // Check if LOCAL provider - special handling for password-based auth
+    if (providerEnum === 'LOCAL') {
+      // Check if user has a password
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { password: true }
+      });
+
+      if (!user?.password) {
+        return res.status(400).json({ error: 'Local authentication not set up' });
+      }
+
+      // Remove password (set to null)
+      await prisma.user.update({
+        where: { id: userId },
+        data: { password: null }
+      });
+
+      // Remove LOCAL auth provider entry if exists
+      await prisma.userAuthProvider.deleteMany({
+        where: {
+          userId,
+          provider: 'LOCAL'
+        }
+      });
+    } else {
+      // Unlink the provider
+      const deletedProvider = await prisma.userAuthProvider.deleteMany({
+        where: {
+          userId,
+          provider: providerEnum
+        }
+      });
+
+      if (deletedProvider.count === 0) {
+        return res.status(404).json({ error: 'Provider not linked to your account' });
+      }
+    }
+
+    res.json({
+      message: `${provider} unlinked successfully`,
+      provider: providerEnum
+    });
+  } catch (error) {
+    console.error('Unlink provider error:', error);
+    res.status(500).json({ error: 'Failed to unlink provider' });
+  }
 }
