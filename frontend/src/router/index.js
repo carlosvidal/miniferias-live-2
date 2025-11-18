@@ -121,6 +121,11 @@ const router = createRouter({
           component: () => import('@/views/exhibitor/OrdersView.vue')
         },
         {
+          path: 'orders/:id',
+          name: 'exhibitor-order-detail',
+          component: () => import('@/views/exhibitor/OrderDetailView.vue')
+        },
+        {
           path: 'live',
           name: 'exhibitor-live',
           component: () => import('@/views/exhibitor/LiveStreamView.vue')
@@ -173,6 +178,7 @@ router.beforeEach((to, from, next) => {
       'exhibitor-booth',
       'exhibitor-products',
       'exhibitor-orders',
+      'exhibitor-order-detail',
       'exhibitor-live',
       'profile',
       'login',

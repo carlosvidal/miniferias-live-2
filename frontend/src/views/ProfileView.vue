@@ -1,8 +1,6 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <AppHeader />
-    <main class="container mx-auto px-4 py-8">
-      <h1 class="text-3xl font-bold mb-6">Mi Perfil</h1>
+  <div class="w-full">
+    <h1 class="text-2xl md:text-3xl font-bold mb-6">Mi Perfil</h1>
 
       <!-- Loading State -->
       <div v-if="loading" class="card max-w-2xl">
@@ -259,13 +257,11 @@
           </div>
         </form>
       </div>
-    </main>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, reactive } from 'vue'
-import AppHeader from '@/components/shared/AppHeader.vue'
 import ImageUpload from '@/components/shared/ImageUpload.vue'
 import { authAPI } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
