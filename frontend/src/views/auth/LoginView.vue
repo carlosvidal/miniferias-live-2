@@ -186,10 +186,13 @@ async function handleSubmit() {
 }
 
 function handleSocialLogin(provider) {
-  // Get the API URL from environment or default to localhost
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+  // Get the backend base URL (without /api)
+  let backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+
+  // Remove /api suffix if present
+  backendUrl = backendUrl.replace(/\/api\/?$/, '')
 
   // Redirect to OAuth endpoint
-  window.location.href = `${apiUrl}/api/auth/${provider}`
+  window.location.href = `${backendUrl}/api/auth/${provider}`
 }
 </script>
