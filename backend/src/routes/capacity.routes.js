@@ -7,7 +7,7 @@ import {
   getAvailableProviders,
   calculateOptimalDistribution
 } from '../controllers/capacity.controller.js';
-import { authMiddleware } from '../middleware/auth.middleware.js';
+import { authenticate } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
@@ -15,21 +15,21 @@ const router = express.Router();
 // Only admins and exhibitors should be able to access these for planning
 
 // Get available providers
-router.get('/providers', authMiddleware, getAvailableProviders);
+router.get('/providers', authenticate, getAvailableProviders);
 
 // Get pricing for a specific provider
-router.get('/pricing/:provider', authMiddleware, getProviderPricing);
+router.get('/pricing/:provider', authenticate, getProviderPricing);
 
 // Calculate cost estimate
-router.post('/estimate', authMiddleware, calculateCostEstimate);
+router.post('/estimate', authenticate, calculateCostEstimate);
 
 // Calculate capacity from budget
-router.post('/from-budget', authMiddleware, calculateCapacityFromBudget);
+router.post('/from-budget', authenticate, calculateCapacityFromBudget);
 
 // Compare providers
-router.post('/compare', authMiddleware, compareProviders);
+router.post('/compare', authenticate, compareProviders);
 
 // Calculate optimal booth distribution
-router.post('/optimal-distribution', authMiddleware, calculateOptimalDistribution);
+router.post('/optimal-distribution', authenticate, calculateOptimalDistribution);
 
 export default router;
