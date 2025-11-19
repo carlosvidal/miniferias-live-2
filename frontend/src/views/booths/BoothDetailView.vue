@@ -286,8 +286,82 @@
           </div>
         </div>
 
-        <!-- Cart Button -->
-        <button
+        <!-- Right Side: User Menu and Cart -->
+        <div class="flex items-center gap-2">
+          <!-- User Menu (if authenticated) -->
+          <div v-if="authStore.isAuthenticated" class="relative" ref="userMenuRef">
+            <button
+              @click="toggleUserMenu"
+              class="flex cursor-pointer items-center justify-center rounded-full w-10 h-10 bg-gray-800 text-white hover:bg-gray-700 transition-colors overflow-hidden"
+            >
+              <img
+                v-if="authStore.user?.profilePicture"
+                :src="authStore.user.profilePicture"
+                :alt="authStore.user.name"
+                class="w-full h-full object-cover"
+              />
+              <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+              </svg>
+            </button>
+
+            <!-- User Dropdown -->
+            <Transition
+              enter-active-class="transition ease-out duration-100"
+              enter-from-class="transform opacity-0 scale-95"
+              enter-to-class="transform opacity-100 scale-100"
+              leave-active-class="transition ease-in duration-75"
+              leave-from-class="transform opacity-100 scale-100"
+              leave-to-class="transform opacity-0 scale-95"
+            >
+              <div
+                v-if="showUserMenu"
+                class="absolute right-0 mt-2 w-48 bg-gray-800 rounded-xl shadow-lg border border-gray-700 py-2 overflow-hidden z-50"
+              >
+                <router-link
+                  to="/profile"
+                  @click="closeUserMenu"
+                  class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                  </svg>
+                  Mi Perfil
+                </router-link>
+                <router-link
+                  to="/orders"
+                  @click="closeUserMenu"
+                  class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                  </svg>
+                  Mis Órdenes
+                </router-link>
+                <button
+                  @click="handleLogout"
+                  class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-gray-700 hover:text-red-300 transition-colors border-t border-gray-700 mt-1 pt-2.5"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                  </svg>
+                  Cerrar Sesión
+                </button>
+              </div>
+            </Transition>
+          </div>
+
+          <!-- Login Button (if not authenticated) -->
+          <button
+            v-else
+            @click="$router.push('/login')"
+            class="flex cursor-pointer items-center justify-center rounded-full px-4 py-2 bg-pink-600 text-white text-sm font-medium hover:bg-pink-700 transition-colors"
+          >
+            Ingresar
+          </button>
+
+          <!-- Cart Button -->
+          <button
           @click="showCartModal = true"
           class="relative flex cursor-pointer items-center justify-center rounded-full w-10 h-10 bg-pink-600 text-white hover:bg-pink-700 transition-colors"
         >
