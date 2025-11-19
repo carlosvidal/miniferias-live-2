@@ -394,7 +394,7 @@
 
           <!-- Products List -->
           <div class="flex-1 overflow-y-auto p-4">
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-2 xl:grid-cols-3 gap-3">
               <div
                 v-for="(product, index) in products"
                 :key="product.id"
