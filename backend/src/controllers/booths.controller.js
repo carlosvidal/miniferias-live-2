@@ -1,9 +1,10 @@
 import prisma from '../config/prisma.js';
 import { generateAgoraToken } from '../services/agora.service.js';
+import { StreamProviderFactory } from '../services/streaming/StreamProviderFactory.js';
 
-// Helper function to generate a valid Agora UID from user ID
-// Agora requires UID to be in range [0, 10000] for basic plan or a string
-function generateAgoraUid(userId) {
+// Helper function to generate a valid stream UID from user ID
+// Most streaming providers require numeric UIDs or support both numeric/string
+function generateStreamUid(userId) {
   // Create a simple hash from the UUID
   let hash = 0;
   const cleanId = userId.replace(/-/g, '');
@@ -325,6 +326,11 @@ export async function startStreaming(req, res) {
       include: {
         members: {
           where: { userId: req.user.id }
+        },
+        event: {
+          select: {
+            streamProvider: true
+          }
         }
       }
     });
@@ -342,8 +348,15 @@ export async function startStreaming(req, res) {
       return res.status(403).json({ error: 'Not authorized' });
     }
 
-    // Generate Agora channel name
+    // Generate channel name
     const channelName = `booth-${booth.id}`;
+    const provider = booth.event.streamProvider || 'AGORA';
+
+    // Get streaming provider
+    const streamProvider = StreamProviderFactory.createProvider(provider);
+
+    // Create channel configuration
+    const channelConfig = await streamProvider.createChannel(channelName);
 
     // Update booth
     const updatedBooth = await prisma.booth.update({
@@ -351,18 +364,19 @@ export async function startStreaming(req, res) {
       data: {
         isStreaming: true,
         streamStarted: new Date(),
-        agoraChannel: channelName
+        streamChannel: channelName,
+        streamConfig: channelConfig
       }
     });
 
-    // Generate Agora token for host
-    const uid = generateAgoraUid(req.user.id);
-    const agoraData = generateAgoraToken(channelName, uid, 'host');
+    // Generate token for host
+    const uid = generateStreamUid(req.user.id);
+    const tokenData = await streamProvider.generateToken(channelName, uid, 'host');
 
     res.json({
       message: 'Streaming started successfully',
       booth: updatedBooth,
-      agora: agoraData
+      streaming: tokenData
     });
   } catch (error) {
     console.error('Start streaming error:', error);
@@ -400,7 +414,9 @@ export async function stopStreaming(req, res) {
       where: { id },
       data: {
         isStreaming: false,
-        agoraChannel: null
+        streamChannel: null,
+        streamConfig: null,
+        currentViewers: 0
       }
     });
 
@@ -423,7 +439,12 @@ export async function getStreamToken(req, res) {
       include: {
         members: req.user ? {
           where: { userId: req.user.id }
-        } : false
+        } : false,
+        event: {
+          select: {
+            streamProvider: true
+          }
+        }
       }
     });
 
@@ -431,9 +452,13 @@ export async function getStreamToken(req, res) {
       return res.status(404).json({ error: 'Booth not found' });
     }
 
-    if (!booth.isStreaming || !booth.agoraChannel) {
+    if (!booth.isStreaming || !booth.streamChannel) {
       return res.status(400).json({ error: 'Booth is not currently streaming' });
     }
+
+    // Get streaming provider
+    const provider = booth.event.streamProvider || 'AGORA';
+    const streamProvider = StreamProviderFactory.createProvider(provider);
 
     // Determine role based on membership
     let role = 'audience';
@@ -446,12 +471,12 @@ export async function getStreamToken(req, res) {
     }
 
     const uid = req.user
-      ? generateAgoraUid(req.user.id)
+      ? generateStreamUid(req.user.id)
       : Math.floor(Math.random() * 10000) + 1;
 
-    const agoraData = generateAgoraToken(booth.agoraChannel, uid, role);
+    const tokenData = await streamProvider.generateToken(booth.streamChannel, uid, role);
 
-    res.json(agoraData);
+    res.json(tokenData);
   } catch (error) {
     console.error('Get stream token error:', error);
     res.status(500).json({ error: 'Failed to get stream token' });

@@ -19,6 +19,7 @@ import adminRoutes from './routes/admin.routes.js';
 import usersRoutes from './routes/users.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import notificationsRoutes from './routes/notifications.routes.js';
+import capacityRoutes from './routes/capacity.routes.js';
 
 dotenv.config();
 
@@ -99,6 +100,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/capacity', capacityRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
