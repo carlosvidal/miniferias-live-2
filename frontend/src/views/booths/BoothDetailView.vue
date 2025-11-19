@@ -432,6 +432,14 @@
       :order-id="completedOrderId"
       @close="closeThankYou"
     />
+
+    <!-- Authentication Modal -->
+    <SocialLoginModal
+      v-model="showAuthModal"
+      :title="modalConfig.title"
+      :message="modalConfig.message"
+      @update:model-value="closeModal"
+    />
   </div>
 </template>
 
@@ -443,11 +451,13 @@ import { useBoothsStore } from '@/stores/booths'
 import { useProductsStore } from '@/stores/products'
 import { useCartStore } from '@/stores/cart'
 import { useAgora } from '@/composables/useAgora'
+import { useAuthPrompt } from '@/composables/useAuthPrompt'
 import { subscribeToBoothMessages } from '@/services/supabase'
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
 import ShoppingCart from '@/components/booths/ShoppingCart.vue'
 import CheckoutOverlay from '@/components/booths/CheckoutOverlay.vue'
 import ThankYouOverlay from '@/components/booths/ThankYouOverlay.vue'
+import SocialLoginModal from '@/components/SocialLoginModal.vue'
 import api from '@/services/api'
 
 const route = useRoute()
@@ -456,6 +466,9 @@ const authStore = useAuthStore()
 const boothsStore = useBoothsStore()
 const productsStore = useProductsStore()
 const cartStore = useCartStore()
+
+// Authentication prompt
+const { requireAuth, showModal: showAuthModal, modalConfig, closeModal } = useAuthPrompt()
 
 const loading = ref(true)
 const error = ref(null)
@@ -652,9 +665,12 @@ function subscribeToMessages() {
 async function sendComment() {
   if (!newComment.value.trim()) return
 
-  if (!authStore.isAuthenticated) {
-    alert('Debes iniciar sesión para comentar')
-    return
+  // Check authentication with custom modal
+  if (!requireAuth({
+    title: 'Únete a la conversación',
+    message: 'Inicia sesión para enviar mensajes en el chat'
+  })) {
+    return // Modal will show automatically
   }
 
   try {
@@ -685,6 +701,14 @@ function closeProductModal() {
 
 function addToCartFromModal() {
   if (!selectedProduct.value) return
+
+  // Check authentication before adding to cart
+  if (!requireAuth({
+    title: '¡Completa tu compra!',
+    message: 'Inicia sesión para agregar productos al carrito'
+  })) {
+    return // Modal will show automatically
+  }
 
   cartStore.addItem({
     productId: selectedProduct.value.id,
