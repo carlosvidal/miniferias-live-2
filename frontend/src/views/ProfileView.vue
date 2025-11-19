@@ -145,6 +145,111 @@
             </div>
           </div>
 
+          <!-- Connected Accounts -->
+          <div>
+            <h3 class="text-lg font-semibold mb-4">Cuentas Conectadas</h3>
+            <p class="text-sm text-gray-600 mb-4">
+              Gestiona los métodos de inicio de sesión vinculados a tu cuenta
+            </p>
+
+            <div class="space-y-3">
+              <!-- Google -->
+              <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                <div class="flex items-center gap-3">
+                  <svg class="w-6 h-6" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  </svg>
+                  <div>
+                    <p class="font-medium text-gray-900">Google</p>
+                    <p v-if="isProviderLinked('GOOGLE')" class="text-xs text-green-600">Conectado</p>
+                    <p v-else class="text-xs text-gray-500">No conectado</p>
+                  </div>
+                </div>
+                <button
+                  v-if="isProviderLinked('GOOGLE')"
+                  @click="confirmUnlink('GOOGLE')"
+                  :disabled="!canUnlinkProvider"
+                  class="px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Desvincular
+                </button>
+                <button
+                  v-else
+                  @click="linkProvider('google')"
+                  class="px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                >
+                  Conectar
+                </button>
+              </div>
+
+              <!-- Facebook -->
+              <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                <div class="flex items-center gap-3">
+                  <svg class="w-6 h-6" fill="#1877F2" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  </svg>
+                  <div>
+                    <p class="font-medium text-gray-900">Facebook</p>
+                    <p v-if="isProviderLinked('FACEBOOK')" class="text-xs text-green-600">Conectado</p>
+                    <p v-else class="text-xs text-gray-500">No conectado</p>
+                  </div>
+                </div>
+                <button
+                  v-if="isProviderLinked('FACEBOOK')"
+                  @click="confirmUnlink('FACEBOOK')"
+                  :disabled="!canUnlinkProvider"
+                  class="px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Desvincular
+                </button>
+                <button
+                  v-else
+                  @click="linkProvider('facebook')"
+                  class="px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                >
+                  Conectar
+                </button>
+              </div>
+
+              <!-- TikTok -->
+              <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                <div class="flex items-center gap-3">
+                  <svg class="w-6 h-6" viewBox="0 0 24 24">
+                    <path fill="#000000" d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                  </svg>
+                  <div>
+                    <p class="font-medium text-gray-900">TikTok</p>
+                    <p v-if="isProviderLinked('TIKTOK')" class="text-xs text-green-600">Conectado</p>
+                    <p v-else class="text-xs text-gray-500">No conectado</p>
+                  </div>
+                </div>
+                <button
+                  v-if="isProviderLinked('TIKTOK')"
+                  @click="confirmUnlink('TIKTOK')"
+                  :disabled="!canUnlinkProvider"
+                  class="px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Desvincular
+                </button>
+                <button
+                  v-else
+                  @click="linkProvider('tiktok')"
+                  class="px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                >
+                  Conectar
+                </button>
+              </div>
+
+              <!-- Info message when only one provider -->
+              <p v-if="!canUnlinkProvider" class="text-xs text-amber-600 bg-amber-50 p-3 rounded-lg">
+                Debes tener al menos dos métodos de inicio de sesión antes de poder desvincular uno.
+              </p>
+            </div>
+          </div>
+
           <!-- Shipping Address (for visitors) -->
           <div v-if="form.role === 'VISITOR' || form.shippingAddress">
             <h3 class="text-lg font-semibold mb-4">Dirección de Envío</h3>
@@ -261,12 +366,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import ImageUpload from '@/components/shared/ImageUpload.vue'
 import { authAPI } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 import { useImageUpload } from '@/composables/useImageUpload'
 
+const route = useRoute()
 const authStore = useAuthStore()
 const { getImageUrl } = useImageUpload()
 
@@ -282,7 +389,8 @@ const form = ref({
   phone: '',
   profilePicture: null,
   role: 'VISITOR',
-  shippingAddress: null
+  shippingAddress: null,
+  authProviders: []
 })
 
 const shippingAddress = reactive({
@@ -292,6 +400,82 @@ const shippingAddress = reactive({
   postalCode: '',
   reference: ''
 })
+
+// Linked providers management
+const linkedProviders = computed(() => {
+  return form.value.authProviders || []
+})
+
+const canUnlinkProvider = computed(() => {
+  return linkedProviders.value.length > 1
+})
+
+function isProviderLinked(provider) {
+  return linkedProviders.value.some(p => p.provider === provider)
+}
+
+function linkProvider(provider) {
+  // Get the backend base URL (without /api)
+  let backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+  backendUrl = backendUrl.replace(/\/api\/?$/, '')
+
+  // Get current token and redirect to link endpoint with authorization
+  const token = localStorage.getItem('token')
+
+  // Redirect to OAuth link endpoint
+  // The backend will handle authentication and redirect back to profile
+  window.location.href = `${backendUrl}/api/auth/link/${provider}?token=${token}`
+}
+
+async function confirmUnlink(provider) {
+  if (!canUnlinkProvider.value) {
+    errorMessage.value = 'Debes tener al menos dos métodos de inicio de sesión antes de poder desvincular uno.'
+    setTimeout(() => {
+      errorMessage.value = ''
+    }, 5000)
+    return
+  }
+
+  const providerNames = {
+    'GOOGLE': 'Google',
+    'FACEBOOK': 'Facebook',
+    'TIKTOK': 'TikTok'
+  }
+
+  const confirmed = confirm(`¿Estás seguro de que deseas desvincular ${providerNames[provider]}?\n\nAún podrás iniciar sesión con tus otros métodos vinculados.`)
+
+  if (confirmed) {
+    await unlinkProvider(provider)
+  }
+}
+
+async function unlinkProvider(provider) {
+  try {
+    saving.value = true
+    errorMessage.value = ''
+
+    await authAPI.unlinkProvider(provider.toLowerCase())
+
+    // Reload user data to update linked providers
+    const response = await authAPI.getMe()
+    form.value.authProviders = response.data.authProviders || []
+
+    successMessage.value = `${provider} desvinculado correctamente`
+
+    setTimeout(() => {
+      successMessage.value = ''
+    }, 3000)
+  } catch (error) {
+    console.error('Error unlinking provider:', error)
+    errorMessage.value = error.response?.data?.error || 'Error al desvincular el proveedor'
+
+    setTimeout(() => {
+      errorMessage.value = ''
+    }, 5000)
+  } finally {
+    saving.value = false
+  }
+}
 
 onMounted(async () => {
   try {
@@ -305,12 +489,45 @@ onMounted(async () => {
       phone: user.phone || '',
       profilePicture: user.profilePicture,
       role: user.role,
-      shippingAddress: user.shippingAddress
+      shippingAddress: user.shippingAddress,
+      authProviders: user.authProviders || []
     }
 
     // Load shipping address if exists
     if (user.shippingAddress) {
       Object.assign(shippingAddress, user.shippingAddress)
+    }
+
+    // Check for OAuth linking result in URL params
+    if (route.query.linked) {
+      const providerNames = {
+        'google': 'Google',
+        'facebook': 'Facebook',
+        'tiktok': 'TikTok'
+      }
+      const providerName = providerNames[route.query.linked] || route.query.linked
+      successMessage.value = `${providerName} vinculado correctamente`
+
+      // Clear URL params
+      window.history.replaceState({}, '', '/profile')
+
+      setTimeout(() => {
+        successMessage.value = ''
+      }, 5000)
+    } else if (route.query.error) {
+      const errorMessages = {
+        'link_failed': 'Error al vincular la cuenta',
+        'provider_already_linked': 'Esta cuenta ya está vinculada a otro usuario',
+        'link_callback_failed': 'Error en el proceso de vinculación'
+      }
+      errorMessage.value = errorMessages[route.query.error] || 'Error al vincular la cuenta'
+
+      // Clear URL params
+      window.history.replaceState({}, '', '/profile')
+
+      setTimeout(() => {
+        errorMessage.value = ''
+      }, 5000)
     }
   } catch (error) {
     console.error('Error loading profile:', error)
