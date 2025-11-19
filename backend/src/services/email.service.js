@@ -148,3 +148,110 @@ export async function sendEventReminder(event, email) {
 
   return sendEmail({ to: email, subject, html, text });
 }
+
+export async function sendDataDeletionConfirmation(user, deletionToken, reason) {
+  const subject = 'Confirmación de Eliminación de Cuenta - Miniferias Live';
+  const confirmUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/confirm-deletion?token=${deletionToken}`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #FEF2F2; border-left: 4px solid #EF4444; padding: 20px; margin-bottom: 20px;">
+        <h1 style="color: #991B1B; margin: 0;">⚠️ Solicitud de Eliminación de Cuenta</h1>
+      </div>
+
+      <p style="font-size: 16px; color: #333;">Hola ${user.name},</p>
+
+      <p style="font-size: 16px; color: #555;">
+        Hemos recibido una solicitud para eliminar tu cuenta de Miniferias Live y todos tus datos personales.
+      </p>
+
+      ${reason ? `
+        <div style="background-color: #F3F4F6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+          <p style="margin: 0; font-size: 14px; color: #666;">
+            <strong>Motivo proporcionado:</strong><br/>
+            ${reason}
+          </p>
+        </div>
+      ` : ''}
+
+      <div style="background-color: #FEF2F2; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #FEE2E2;">
+        <h3 style="color: #991B1B; margin-top: 0;">⚠️ Esta acción es permanente e irreversible</h3>
+        <p style="color: #555; font-size: 14px; margin-bottom: 0;">
+          Si confirmas la eliminación, se eliminarán los siguientes datos:
+        </p>
+        <ul style="color: #555; font-size: 14px;">
+          <li>Información de perfil (nombre, email, foto)</li>
+          <li>Datos de autenticación</li>
+          <li>Mensajes de chat</li>
+          <li>Preferencias y configuraciones</li>
+        </ul>
+        <p style="color: #555; font-size: 14px;">
+          <strong>Nota:</strong> Los registros de pedidos se conservarán de forma anónima por razones legales y contables.
+        </p>
+      </div>
+
+      <p style="font-size: 16px; color: #555;">
+        <strong>Si NO solicitaste esta eliminación,</strong> ignora este correo y tu cuenta permanecerá activa.
+      </p>
+
+      <p style="font-size: 16px; color: #555;">
+        <strong>Para confirmar la eliminación de tu cuenta,</strong> haz clic en el siguiente botón:
+      </p>
+
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${confirmUrl}"
+           style="background-color: #DC2626; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+          Confirmar Eliminación de Cuenta
+        </a>
+      </div>
+
+      <p style="font-size: 14px; color: #999;">
+        O copia y pega este enlace en tu navegador:<br/>
+        <a href="${confirmUrl}" style="color: #4F46E5; word-break: break-all;">${confirmUrl}</a>
+      </p>
+
+      <div style="background-color: #EFF6FF; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3B82F6;">
+        <p style="margin: 0; font-size: 14px; color: #1E40AF;">
+          <strong>🔒 Seguridad:</strong> Este enlace es válido por 24 horas y solo puede usarse una vez.
+        </p>
+      </div>
+
+      <p style="font-size: 12px; color: #999; margin-top: 40px; padding-top: 20px; border-top: 1px solid #E5E7EB;">
+        Este es un correo automático de Miniferias Live. Si tienes preguntas, contacta a privacy@miniferieslive.com
+      </p>
+    </div>
+  `;
+
+  const text = `
+    CONFIRMACIÓN DE ELIMINACIÓN DE CUENTA - MINIFERIAS LIVE
+
+    Hola ${user.name},
+
+    Hemos recibido una solicitud para eliminar tu cuenta de Miniferias Live y todos tus datos personales.
+
+    ${reason ? `Motivo proporcionado: ${reason}\n\n` : ''}
+
+    ⚠️ ESTA ACCIÓN ES PERMANENTE E IRREVERSIBLE
+
+    Si confirmas la eliminación, se eliminarán:
+    - Información de perfil (nombre, email, foto)
+    - Datos de autenticación
+    - Mensajes de chat
+    - Preferencias y configuraciones
+
+    Nota: Los registros de pedidos se conservarán de forma anónima por razones legales.
+
+    Si NO solicitaste esta eliminación, ignora este correo y tu cuenta permanecerá activa.
+
+    Para confirmar la eliminación de tu cuenta, haz clic en este enlace:
+    ${confirmUrl}
+
+    Este enlace es válido por 24 horas y solo puede usarse una vez.
+
+    ---
+    Miniferias Live
+    privacy@miniferieslive.com
+  `;
+
+  return sendEmail({ to: user.email, subject, html, text });
+}

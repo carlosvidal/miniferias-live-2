@@ -163,6 +163,8 @@
           </div>
         </div>
       </main>
+
+      <AppFooter />
     </div>
   </div>
 </template>
@@ -172,6 +174,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useEventsStore } from '@/stores/events'
 import AppHeader from '@/components/shared/AppHeader.vue'
+import AppFooter from '@/components/shared/AppFooter.vue'
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
 import BoothCard from '@/components/booths/BoothCard.vue'
 import { useImageUpload } from '@/composables/useImageUpload'

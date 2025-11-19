@@ -97,6 +97,8 @@
         <p class="text-gray-400 text-sm">Vuelve pronto para ver nuevos eventos</p>
       </div>
     </main>
+
+    <AppFooter />
   </div>
 </template>
 
@@ -106,6 +108,7 @@ import { useEventsStore } from '@/stores/events'
 import { useAuthStore } from '@/stores/auth'
 import { useCartStore } from '@/stores/cart'
 import AppHeader from '@/components/shared/AppHeader.vue'
+import AppFooter from '@/components/shared/AppFooter.vue'
 import LoadingSpinner from '@/components/shared/LoadingSpinner.vue'
 import EventCard from '@/components/events/EventCard.vue'
 
