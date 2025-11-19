@@ -394,22 +394,24 @@
 
           <!-- Products List -->
           <div class="flex-1 overflow-y-auto p-4">
-            <div
-              v-for="(product, index) in products"
-              :key="product.id"
-              @click="showProductModal(product)"
-              class="flex flex-row gap-3 rounded-xl cursor-pointer hover:bg-gray-700 transition-all p-3 mb-3"
-              :class="index === selectedProductIndex ? 'ring-2 ring-pink-500 shadow-lg' : ''"
-            >
+            <div class="grid grid-cols-2 gap-3">
               <div
-                class="w-20 h-20 bg-center bg-no-repeat bg-cover rounded-xl shrink-0"
-                :style="`background-image: url(${product.images?.[0] || 'https://via.placeholder.com/64'})`"
-              ></div>
-              <div class="flex flex-col flex-1 justify-center">
-                <p class="text-white text-sm font-semibold line-clamp-2">{{ product.name }}</p>
-                <p class="text-pink-400 text-lg font-bold mt-1">S/ {{ formatPrice(product.price) }}</p>
-                <p v-if="product.stock > 0" class="text-gray-400 text-xs mt-1">Stock: {{ product.stock }}</p>
-                <p v-else class="text-red-400 text-xs font-medium mt-1">Sin stock</p>
+                v-for="(product, index) in products"
+                :key="product.id"
+                @click="showProductModal(product)"
+                class="flex flex-col gap-2 rounded-xl cursor-pointer hover:bg-gray-700 transition-all p-3"
+                :class="index === selectedProductIndex ? 'ring-2 ring-pink-500 shadow-lg' : ''"
+              >
+                <div
+                  class="w-full aspect-square bg-center bg-no-repeat bg-cover rounded-xl"
+                  :style="`background-image: url(${product.images?.[0] || 'https://via.placeholder.com/64'})`"
+                ></div>
+                <div class="flex flex-col">
+                  <p class="text-white text-sm font-semibold line-clamp-2">{{ product.name }}</p>
+                  <p class="text-pink-400 text-base font-bold mt-1">S/ {{ formatPrice(product.price) }}</p>
+                  <p v-if="product.stock > 0" class="text-gray-400 text-xs mt-1">Stock: {{ product.stock }}</p>
+                  <p v-else class="text-red-400 text-xs font-medium mt-1">Sin stock</p>
+                </div>
               </div>
             </div>
           </div>
