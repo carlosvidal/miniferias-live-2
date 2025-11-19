@@ -386,9 +386,9 @@
         </div>
 
         <!-- Products Column -->
-        <div class="flex flex-col w-[34%] bg-gray-800 rounded-xl overflow-hidden">
+        <div class="flex flex-col w-[34%] bg-gray-900 rounded-xl overflow-hidden">
           <!-- Header -->
-          <div class="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-900">
+          <div class="flex items-center justify-between p-4 border-b border-gray-800 bg-gray-800">
             <h3 class="text-white text-lg font-bold">Productos</h3>
           </div>
 
