@@ -73,6 +73,7 @@ model User {
 
   orders            Order[]
   messages          Message[]
+  boothVisits       BoothVisit[]
   pushSubscriptions PushSubscription[]
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
@@ -166,6 +167,7 @@ model Booth {
   products        Product[]
   orders          Order[]
   messages        Message[]
+  visits          BoothVisit[]
 
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -274,6 +276,30 @@ model Message {
 
   @@index([boothId, createdAt])
   @@index([userId])
+}
+
+model BoothVisit {
+  id          String    @id @default(uuid())
+
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  boothId     String
+  booth       Booth     @relation(fields: [boothId], references: [id], onDelete: Cascade)
+
+  entryTime   DateTime  @default(now())
+  exitTime    DateTime?
+  duration    Int?      // Duration in seconds
+
+  source      String?   // How they entered (direct link, search, event page, etc.)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([boothId])
+  @@index([userId])
+  @@index([entryTime])
+  @@index([boothId, entryTime])
 }
 
 model BoothMember {

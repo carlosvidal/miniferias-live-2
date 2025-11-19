@@ -13,6 +13,12 @@ import {
   removeBoothMember,
   updateBoothMemberRole
 } from '../controllers/booths.controller.js';
+import {
+  recordBoothEntry,
+  recordBoothExit,
+  getBoothVisitStats,
+  getCurrentVisitors
+} from '../controllers/boothVisits.controller.js';
 import { authenticate, optionalAuth } from '../middleware/auth.middleware.js';
 import { requireAdmin, requireExhibitor } from '../middleware/role.middleware.js';
 import { validate } from '../middleware/validate.middleware.js';
@@ -35,6 +41,12 @@ router.post('/:id/stream/stop', authenticate, stopStreaming);
 router.post('/:id/members', authenticate, addBoothMember);
 router.delete('/:id/members/:memberId', authenticate, removeBoothMember);
 router.patch('/:id/members/:memberId', authenticate, updateBoothMemberRole);
+
+// Booth visits tracking
+router.post('/:id/visits', authenticate, recordBoothEntry);
+router.post('/:id/visits/exit', authenticate, recordBoothExit);
+router.get('/:id/visits/stats', authenticate, getBoothVisitStats);
+router.get('/:id/visitors/current', authenticate, getCurrentVisitors);
 
 // Admin only routes
 router.post('/', authenticate, requireAdmin, validate(createBoothSchema), createBooth);

@@ -729,6 +729,43 @@ const showCheckoutOverlay = ref(false)
 const showThankYouOverlay = ref(false)
 const completedOrderId = ref(null)
 
+// Track visit ID for exit recording
+const currentVisitId = ref(null)
+
+// Record booth entry
+async function recordBoothEntry(boothId, source = 'direct') {
+  if (!authStore.isAuthenticated) {
+    return // Only track authenticated users
+  }
+
+  try {
+    const response = await api.post(`/booths/${boothId}/visits`, { source })
+    if (response.data.visit) {
+      currentVisitId.value = response.data.visit.id
+      console.log('Booth entry recorded:', response.data.visit)
+    }
+  } catch (err) {
+    // Silently fail - don't interrupt user experience
+    console.error('Error recording booth entry:', err)
+  }
+}
+
+// Record booth exit
+async function recordBoothExit(boothId) {
+  if (!authStore.isAuthenticated || !currentVisitId.value) {
+    return
+  }
+
+  try {
+    await api.post(`/booths/${boothId}/visits/exit`)
+    console.log('Booth exit recorded')
+    currentVisitId.value = null
+  } catch (err) {
+    // Silently fail
+    console.error('Error recording booth exit:', err)
+  }
+}
+
 // Load booth and products
 onMounted(async () => {
   try {
@@ -742,6 +779,11 @@ onMounted(async () => {
       isBoothMember.value = booth.value.members.some(
         member => member.userId === authStore.user?.id
       )
+    }
+
+    // Record booth entry for non-members
+    if (authStore.isAuthenticated && !isBoothMember.value) {
+      await recordBoothEntry(boothId, 'direct')
     }
 
     // Load initial messages
@@ -910,6 +952,11 @@ function closeThankYou() {
 
 // Cleanup on unmount
 onUnmounted(async () => {
+  // Record booth exit
+  if (booth.value && authStore.isAuthenticated && !isBoothMember.value) {
+    await recordBoothExit(booth.value.id)
+  }
+
   if (isJoined.value) {
     await leaveChannel()
   }

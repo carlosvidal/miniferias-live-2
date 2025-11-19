@@ -288,6 +288,46 @@ class OneSignalService {
   }
 
   /**
+   * Enviar notificación a los miembros de un booth cuando un visitante entra
+   * @param {object} booth - Datos del booth
+   * @param {object} visitor - Datos del visitante
+   * @param {string[]} memberUserIds - Array de User IDs de los miembros del booth
+   * @returns {Promise<object>} Resultado del envío
+   */
+  async sendVisitorEnteredBooth(booth, visitor, memberUserIds) {
+    if (!this.isConfigured) {
+      throw new Error('OneSignal not configured')
+    }
+
+    if (!memberUserIds || memberUserIds.length === 0) {
+      console.log('No booth members to notify')
+      return { success: true, recipients: 0 }
+    }
+
+    try {
+      const title = '👤 Nuevo visitante en tu booth'
+      const message = `${visitor.name} acaba de ingresar a "${booth.name}"`
+      const url = `${process.env.FRONTEND_URL}/booths/${booth.id}`
+
+      return await this.sendToExternalUserIds(memberUserIds, {
+        title,
+        message,
+        url,
+        data: {
+          boothId: booth.id,
+          boothName: booth.name,
+          visitorId: visitor.id,
+          visitorName: visitor.name,
+          type: 'visitor_entered_booth'
+        }
+      })
+    } catch (error) {
+      console.error('Error sending visitor entry notification:', error)
+      throw error
+    }
+  }
+
+  /**
    * Cancelar una notificación programada
    * @param {string} notificationId - ID de la notificación
    * @returns {Promise<object>} Resultado de la cancelación
