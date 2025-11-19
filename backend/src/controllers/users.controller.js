@@ -1,5 +1,7 @@
 import prisma from '../config/prisma.js';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { sendDataDeletionConfirmation } from '../services/email.service.js';
 
 export async function getUsers(req, res) {
   try {
@@ -176,5 +178,157 @@ export async function deleteUser(req, res) {
   } catch (error) {
     console.error('Delete user error:', error);
     res.status(500).json({ error: 'Failed to delete user' });
+  }
+}
+
+// Request account deletion (user initiated)
+export async function requestDeletion(req, res) {
+  try {
+    const userId = req.user.id;
+    const { reason } = req.body;
+
+    // Get user data
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Generate deletion token (expires in 24 hours)
+    const deletionToken = jwt.sign(
+      { userId: user.id, purpose: 'account_deletion' },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Send confirmation email
+    await sendDataDeletionConfirmation(user, deletionToken, reason);
+
+    res.json({
+      message: 'Deletion request received. Please check your email to confirm.',
+      email: user.email
+    });
+  } catch (error) {
+    console.error('Request deletion error:', error);
+    res.status(500).json({ error: 'Failed to process deletion request' });
+  }
+}
+
+// Confirm and execute account deletion
+export async function confirmDeletion(req, res) {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({ error: 'Deletion token is required' });
+    }
+
+    // Verify token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        return res.status(400).json({ error: 'Deletion link has expired. Please request a new one.' });
+      }
+      return res.status(400).json({ error: 'Invalid deletion token' });
+    }
+
+    // Validate token purpose
+    if (decoded.purpose !== 'account_deletion') {
+      return res.status(400).json({ error: 'Invalid token purpose' });
+    }
+
+    const userId = decoded.userId;
+
+    // Get user data before deletion
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        boothMemberships: true,
+        orders: true,
+        messages: true,
+        pushSubscriptions: true,
+        authProviders: true
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found or already deleted' });
+    }
+
+    // Perform deletion in transaction
+    await prisma.$transaction(async (tx) => {
+      // Delete related data (cascade will handle most, but we'll be explicit)
+
+      // Soft delete messages (mark as deleted, keep for compliance)
+      await tx.message.updateMany({
+        where: { userId },
+        data: { isDeleted: true, content: '[Usuario eliminado]' }
+      });
+
+      // Delete push subscriptions
+      await tx.pushSubscription.deleteMany({
+        where: { userId }
+      });
+
+      // Delete booth memberships
+      await tx.boothMember.deleteMany({
+        where: { userId }
+      });
+
+      // Delete linked auth providers
+      await tx.userAuthProvider.deleteMany({
+        where: { userId }
+      });
+
+      // Note: Orders are retained for legal/accounting purposes but user reference will be set to null
+      // We'll anonymize the user info in shipping address
+      const orders = await tx.order.findMany({
+        where: { userId }
+      });
+
+      for (const order of orders) {
+        const shippingAddress = order.shippingAddress;
+        if (typeof shippingAddress === 'object' && shippingAddress !== null) {
+          await tx.order.update({
+            where: { id: order.id },
+            data: {
+              shippingAddress: {
+                ...shippingAddress,
+                name: '[Usuario eliminado]',
+                phone: '[Eliminado]',
+                email: '[Eliminado]'
+              }
+            }
+          });
+        }
+      }
+
+      // Update orders to disconnect from user (set userId to a system user or handle appropriately)
+      // For now, we'll keep the userId reference for accounting but the user data is anonymized
+
+      // Finally, delete the user account
+      await tx.user.delete({
+        where: { id: userId }
+      });
+    });
+
+    console.log(`User account deleted: ${userId}`);
+
+    res.json({
+      message: 'Your account and personal data have been successfully deleted.',
+      deletedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Confirm deletion error:', error);
+    res.status(500).json({ error: 'Failed to delete account' });
   }
 }

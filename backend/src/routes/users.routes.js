@@ -1,11 +1,17 @@
 import express from 'express';
-import { getUsers, createUser, updateUserRole, deleteUser } from '../controllers/users.controller.js';
+import { getUsers, createUser, updateUserRole, deleteUser, requestDeletion, confirmDeletion } from '../controllers/users.controller.js';
 import { authenticate } from '../middleware/auth.middleware.js';
 import { requireRole } from '../middleware/role.middleware.js';
 
 const router = express.Router();
 
-// All routes require authentication and admin role
+// User self-service routes (authenticated users only)
+router.post('/request-deletion', authenticate, requestDeletion);
+
+// Public route for confirming deletion (token-based)
+router.get('/confirm-deletion', confirmDeletion);
+
+// Admin routes - require authentication and admin role
 router.use(authenticate);
 router.use(requireRole('ADMIN'));
 

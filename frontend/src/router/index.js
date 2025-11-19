@@ -70,6 +70,31 @@ const router = createRouter({
       component: () => import('@/views/orders/CheckoutView.vue'),
       meta: { requiresAuth: false }
     },
+    // Legal pages
+    {
+      path: '/privacy-policy',
+      name: 'privacy-policy',
+      component: () => import('@/views/legal/PrivacyPolicyView.vue'),
+      meta: { requiresAuth: false }
+    },
+    {
+      path: '/terms-of-service',
+      name: 'terms-of-service',
+      component: () => import('@/views/legal/TermsOfServiceView.vue'),
+      meta: { requiresAuth: false }
+    },
+    {
+      path: '/data-deletion',
+      name: 'data-deletion',
+      component: () => import('@/views/legal/DataDeletionView.vue'),
+      meta: { requiresAuth: false }
+    },
+    {
+      path: '/confirm-deletion',
+      name: 'confirm-deletion',
+      component: () => import('@/views/legal/ConfirmDeletionView.vue'),
+      meta: { requiresAuth: false }
+    },
     // Admin routes
     {
       path: '/admin',
@@ -193,7 +218,11 @@ router.beforeEach((to, from, next) => {
       'exhibitor-live',
       'profile',
       'login',
-      'register'
+      'register',
+      'privacy-policy',
+      'terms-of-service',
+      'data-deletion',
+      'confirm-deletion'
     ]
 
     // If exhibitor tries to access a route they shouldn't
