@@ -256,7 +256,7 @@
     </div>
 
     <!-- Desktop Layout (Header + 3 Columns) -->
-    <div v-else-if="booth" class="hidden lg:flex flex-col h-screen">
+    <div v-else-if="booth" class="hidden lg:flex flex-col h-screen w-full">
 
       <!-- Global Desktop Header -->
       <div class="flex items-center justify-between p-4 bg-gray-900 border-b border-gray-800">
