@@ -141,21 +141,6 @@
             />
           </div>
 
-          <!-- Role -->
-          <div>
-            <label for="role" class="block text-sm font-medium text-gray-700 mb-1">
-              Tipo de Usuario
-            </label>
-            <select
-              id="role"
-              v-model="form.role"
-              class="input"
-            >
-              <option value="VISITOR">Visitante (Comprador)</option>
-              <option value="EXHIBITOR">Expositor (Vendedor)</option>
-            </select>
-          </div>
-
           <!-- Submit Button -->
           <button
             type="submit"
@@ -200,19 +185,8 @@ async function handleSubmit() {
   try {
     await authStore.register(form.value)
 
-    // Redirect based on user role
-    let redirect = '/'
-
-    // Exhibitors should go to their dashboard
-    if (authStore.isExhibitor) {
-      redirect = '/exhibitor'
-    }
-    // Admins should go to admin panel
-    else if (authStore.isAdmin) {
-      redirect = '/admin'
-    }
-
-    router.push(redirect)
+    // All registered users are VISITOR - redirect to home
+    router.push('/')
   } catch (error) {
     console.error('Registration failed:', error)
   }
