@@ -224,3 +224,66 @@ export const uploadAPI = {
    */
   getImageUrl: (imageId, variant = 'public') => api.get(`/upload/url/${imageId}/${variant}`)
 }
+
+// Capacity & Cost Planning API
+export const capacityAPI = {
+  /**
+   * Get available streaming providers
+   * @returns {Promise} List of providers with pricing info
+   */
+  getProviders: () => api.get('/capacity/providers'),
+
+  /**
+   * Get pricing for a specific provider
+   * @param {string} provider - Provider name (AGORA, HUNDREDMS)
+   * @returns {Promise} Pricing information
+   */
+  getProviderPricing: (provider) => api.get(`/capacity/pricing/${provider}`),
+
+  /**
+   * Calculate cost estimate
+   * @param {Object} params
+   * @param {string} params.provider - Provider name
+   * @param {number} params.peakConcurrentUsers - Peak concurrent viewers
+   * @param {number} params.durationMinutes - Event duration in minutes
+   * @param {number} params.numberOfBooths - Number of booths
+   * @param {Object} params.options - Additional options (quality, recording, etc.)
+   * @returns {Promise} Cost estimate
+   */
+  calculateCost: (params) => api.post('/capacity/estimate', params),
+
+  /**
+   * Calculate max capacity from budget
+   * @param {Object} params
+   * @param {string} params.provider - Provider name
+   * @param {number} params.budget - Total budget (USD)
+   * @param {number} params.durationMinutes - Event duration in minutes
+   * @param {number} params.numberOfBooths - Number of booths
+   * @param {Object} params.options - Additional options
+   * @returns {Promise} Capacity calculation
+   */
+  calculateCapacityFromBudget: (params) => api.post('/capacity/from-budget', params),
+
+  /**
+   * Compare costs across all providers
+   * @param {Object} params
+   * @param {number} params.peakConcurrentUsers
+   * @param {number} params.durationMinutes
+   * @param {number} params.numberOfBooths
+   * @param {Object} params.options
+   * @returns {Promise} Array of cost comparisons
+   */
+  compareProviders: (params) => api.post('/capacity/compare', params),
+
+  /**
+   * Calculate optimal booth distribution
+   * @param {Object} params
+   * @param {string} params.provider - Provider name
+   * @param {number} params.budget - Total budget
+   * @param {number} params.durationMinutes - Event duration
+   * @param {number} params.estimatedPeakViewers - Total expected viewers
+   * @param {Object} params.options - Additional options
+   * @returns {Promise} Optimal distribution
+   */
+  calculateOptimalDistribution: (params) => api.post('/capacity/optimal-distribution', params)
+}
