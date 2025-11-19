@@ -44,6 +44,11 @@ enum BoothRole {
   MODERATOR
 }
 
+enum StreamProvider {
+  AGORA
+  HUNDREDMS
+}
+
 model User {
   id                String        @id @default(uuid())
   email             String        @unique
@@ -101,6 +106,19 @@ model Event {
   status          EventStatus @default(DRAFT)
   isLive          Boolean     @default(false)
 
+  // Streaming configuration
+  streamProvider  StreamProvider @default(AGORA)
+
+  // Budget and capacity planning
+  budget          Decimal?    @db.Decimal(10, 2) // Total budget for the event (USD)
+  currency        String?     @default("USD")    // USD, PEN, etc.
+  maxConcurrentViewers Int?    // Maximum concurrent viewers allowed across all booths
+  estimatedPeakViewers Int?    // Estimated peak concurrent viewers for cost calculation
+  maxBooths       Int?        // Maximum number of booths allowed
+
+  // Cost tracking
+  estimatedCost   Decimal?    @db.Decimal(10, 2) // Calculated estimated cost
+
   booths          Booth[]
   reminders       EventReminder[]
   pushSubscriptions PushSubscription[]
@@ -128,10 +146,15 @@ model Booth {
   bankAccount     String?   // Bank account number
   cci             String?   // Código de Cuenta Interbancaria
 
-  // Agora streaming
+  // Streaming (provider-agnostic)
   isStreaming     Boolean   @default(false)
   streamStarted   DateTime?
-  agoraChannel    String?   // Channel name for Agora
+  streamChannel   String?   // Channel/Room name (agora, 100ms, etc.)
+  streamConfig    Json?     // Provider-specific configuration
+
+  // Capacity limits
+  maxConcurrentViewers Int? // Maximum concurrent viewers for this booth
+  currentViewers  Int?      @default(0) // Current number of viewers
 
   // Relations
   eventId         String
