@@ -18,17 +18,15 @@
           :style="!remoteUsers.length && booth.bannerUrl ? `background-image: url(${booth.bannerUrl})` : ''"
         >
           <!-- Remote Stream (Exhibitor) -->
-          <div v-if="remoteUsers.length > 0" class="w-full h-full">
-            <div
-              v-for="user in remoteUsers"
-              :key="user.uid"
-              :id="`remote-player-${user.uid}`"
-              class="w-full h-full"
-            ></div>
-          </div>
+          <div
+            v-for="user in remoteUsers"
+            :key="user.uid"
+            :id="`remote-player-${user.uid}`"
+            class="absolute inset-0 w-full h-full"
+          ></div>
 
           <!-- Placeholder when not streaming -->
-          <div v-else-if="!booth.isStreaming || !remoteUsers.length" class="absolute inset-0 flex items-center justify-center">
+          <div v-if="!booth.isStreaming || !remoteUsers.length" class="absolute inset-0 flex items-center justify-center">
             <div class="text-center text-white z-10">
               <svg class="w-20 h-20 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -667,17 +665,33 @@ setOnVideoTrack(async (uid, videoTrack) => {
   console.log(`🎥 Video track ready for user ${uid}, waiting for DOM...`)
   streamStatus.value = 'Stream activo'
 
-  // Wait for Vue to render the DOM element
-  await nextTick()
+  // Retry logic for finding DOM elements
+  let mobilePlayerElement = null
+  let desktopPlayerElement = null
+  let attempts = 0
+  const maxAttempts = 10 // 2 seconds max
 
-  // Try both mobile and desktop player elements
-  const mobilePlayerElement = document.getElementById(`remote-player-${uid}`)
-  const desktopPlayerElement = document.getElementById(`remote-player-desktop-${uid}`)
+  while (!mobilePlayerElement && !desktopPlayerElement && attempts < maxAttempts) {
+    // Wait for Vue to render
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 200))
+
+    // Try to find elements
+    mobilePlayerElement = document.getElementById(`remote-player-${uid}`)
+    desktopPlayerElement = document.getElementById(`remote-player-desktop-${uid}`)
+
+    if (!mobilePlayerElement && !desktopPlayerElement) {
+      attempts++
+      console.log(`   Waiting for player elements... (attempt ${attempts}/${maxAttempts})`)
+    }
+  }
 
   let played = false
 
   if (mobilePlayerElement) {
     console.log(`📺 Playing video for user ${uid} on mobile`)
+    console.log(`   Element:`, mobilePlayerElement)
+    console.log(`   Element dimensions: ${mobilePlayerElement.offsetWidth}x${mobilePlayerElement.offsetHeight}`)
     try {
       videoTrack.play(mobilePlayerElement)
       played = true
@@ -689,6 +703,8 @@ setOnVideoTrack(async (uid, videoTrack) => {
 
   if (desktopPlayerElement) {
     console.log(`📺 Playing video for user ${uid} on desktop`)
+    console.log(`   Element:`, desktopPlayerElement)
+    console.log(`   Element dimensions: ${desktopPlayerElement.offsetWidth}x${desktopPlayerElement.offsetHeight}`)
     try {
       videoTrack.play(desktopPlayerElement)
       played = true
@@ -701,7 +717,7 @@ setOnVideoTrack(async (uid, videoTrack) => {
   if (played) {
     playedVideos.add(uid)
   } else {
-    console.error(`❌ No player element found for user ${uid}`)
+    console.error(`❌ No player element found for user ${uid} after ${maxAttempts} attempts`)
   }
 })
 
@@ -731,6 +747,35 @@ const completedOrderId = ref(null)
 
 // Track visit ID for exit recording
 const currentVisitId = ref(null)
+let boothStatusInterval = null
+
+// Poll booth status to detect when streaming starts
+function pollBoothStatus() {
+  boothStatusInterval = setInterval(async () => {
+    try {
+      const updatedBooth = await boothsStore.fetchBoothById(booth.value.id)
+      const wasStreaming = booth.value.isStreaming
+      booth.value = updatedBooth
+
+      // If streaming just started, init the stream
+      if (!wasStreaming && updatedBooth.isStreaming) {
+        console.log('🎬 Booth started streaming, joining...')
+        await initStream()
+      }
+
+      // If streaming stopped, leave the channel
+      if (wasStreaming && !updatedBooth.isStreaming) {
+        console.log('🛑 Booth stopped streaming, leaving...')
+        if (isJoined.value) {
+          await leaveChannel()
+        }
+        streamStatus.value = 'El booth no está transmitiendo'
+      }
+    } catch (err) {
+      console.error('Error polling booth status:', err)
+    }
+  }, 3000) // Check every 3 seconds
+}
 
 // Record booth entry
 async function recordBoothEntry(boothId, source = 'direct') {
@@ -792,6 +837,9 @@ onMounted(async () => {
     // Subscribe to new messages
     subscribeToMessages()
 
+    // Start polling booth status to detect when streaming starts/stops
+    pollBoothStatus()
+
     // If booth is streaming, join the stream
     if (booth.value.isStreaming) {
       await initStream()
@@ -845,19 +893,35 @@ async function loadMessages() {
 // Subscribe to real-time messages
 function subscribeToMessages() {
   try {
+    // Clear any existing interval first to prevent duplicates
+    if (messagePollingInterval) {
+      clearInterval(messagePollingInterval)
+      messagePollingInterval = null
+    }
+
     realtimeChannel = subscribeToBoothMessages(booth.value.id, async () => {
       // Reload messages when new one arrives
       await loadMessages()
     })
 
-    if (!realtimeChannel) {
-      console.warn('Real-time chat not available (Supabase not configured)')
-      // Poll for messages every 5 seconds as fallback
-      if (!messagePollingInterval) {
-        messagePollingInterval = setInterval(async () => {
-          await loadMessages()
-        }, 5000)
+    // Always use polling as fallback/supplement (every 2 seconds)
+    messagePollingInterval = setInterval(async () => {
+      try {
+        await loadMessages()
+      } catch (error) {
+        // Stop polling if we're rate limited
+        if (error.response?.status === 429) {
+          console.warn('Rate limited, stopping message polling')
+          if (messagePollingInterval) {
+            clearInterval(messagePollingInterval)
+            messagePollingInterval = null
+          }
+        }
       }
+    }, 2000)
+
+    if (!realtimeChannel) {
+      console.warn('Real-time chat not available (Supabase not configured), using polling only')
     }
   } catch (error) {
     console.error('Failed to subscribe to messages:', error)
@@ -882,6 +946,8 @@ async function sendComment() {
       content: newComment.value.trim()
     })
     newComment.value = ''
+    // Reload messages immediately
+    await loadMessages()
   } catch (err) {
     console.error('Error sending message:', err)
     alert('Error al enviar mensaje')
@@ -967,6 +1033,10 @@ onUnmounted(async () => {
     clearInterval(messagePollingInterval)
     messagePollingInterval = null
   }
+  if (boothStatusInterval) {
+    clearInterval(boothStatusInterval)
+    boothStatusInterval = null
+  }
   // Remove click outside listener
   document.removeEventListener('click', handleClickOutside)
   // Clear played videos set
@@ -1021,5 +1091,22 @@ function formatPrice(price) {
 
 .overflow-y-auto {
   scrollbar-width: none;
+}
+
+/* Force video elements to be visible and fill container */
+#video-container,
+#video-container-desktop {
+  position: relative !important;
+}
+
+[id^="remote-player-"] video {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+  transform: scaleX(-1) !important;
 }
 </style>
