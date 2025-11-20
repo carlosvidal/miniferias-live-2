@@ -3,7 +3,7 @@
   <div class="relative flex h-screen w-full max-w-lg lg:max-w-none mx-auto flex-col lg:flex-row overflow-hidden bg-black">
 
     <!-- Main Content Area with Video Player (Mobile Only) -->
-    <div class="absolute lg:hidden inset-0 h-full w-full">
+    <div class="absolute lg:hidden inset-0 h-full w-full z-0">
       <!-- Loading State -->
       <div v-if="loading" class="flex h-full items-center justify-center bg-gray-900">
         <LoadingSpinner />
@@ -18,15 +18,17 @@
           :style="!remoteUsers.length && booth.bannerUrl ? `background-image: url(${booth.bannerUrl})` : ''"
         >
           <!-- Remote Stream (Exhibitor) -->
-          <div
-            v-for="user in remoteUsers"
-            :key="user.uid"
-            :id="`remote-player-${user.uid}`"
-            class="absolute inset-0 w-full h-full"
-          ></div>
+          <div v-if="remoteUsers.length > 0" class="w-full h-full">
+            <div
+              v-for="user in remoteUsers"
+              :key="user.uid"
+              :id="`remote-player-${user.uid}`"
+              class="w-full h-full"
+            ></div>
+          </div>
 
           <!-- Placeholder when not streaming -->
-          <div v-if="!booth.isStreaming || !remoteUsers.length" class="absolute inset-0 flex items-center justify-center">
+          <div v-else-if="!booth.isStreaming || !remoteUsers.length" class="absolute inset-0 flex items-center justify-center">
             <div class="text-center text-white z-10">
               <svg class="w-20 h-20 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -389,7 +391,7 @@
               <div v-if="remoteUsers.length > 0" class="w-full h-full">
                 <div
                   v-for="user in remoteUsers"
-                  :key="user.uid"
+                  :key="`desktop-${user.uid}`"
                   :id="`remote-player-desktop-${user.uid}`"
                   class="w-full h-full"
                 ></div>
@@ -671,7 +673,7 @@ setOnVideoTrack(async (uid, videoTrack) => {
   let attempts = 0
   const maxAttempts = 10 // 2 seconds max
 
-  while (!mobilePlayerElement && !desktopPlayerElement && attempts < maxAttempts) {
+  while ((!mobilePlayerElement && !desktopPlayerElement) && attempts < maxAttempts) {
     // Wait for Vue to render
     await nextTick()
     await new Promise(resolve => setTimeout(resolve, 200))
@@ -686,38 +688,32 @@ setOnVideoTrack(async (uid, videoTrack) => {
     }
   }
 
-  let played = false
+  // Determine which element is visible (check if mobile element is hidden by lg:hidden)
+  let targetElement = null
+  let targetLabel = ''
 
-  if (mobilePlayerElement) {
-    console.log(`📺 Playing video for user ${uid} on mobile`)
-    console.log(`   Element:`, mobilePlayerElement)
-    console.log(`   Element dimensions: ${mobilePlayerElement.offsetWidth}x${mobilePlayerElement.offsetHeight}`)
-    try {
-      videoTrack.play(mobilePlayerElement)
-      played = true
-      console.log(`✅ Video playing successfully on mobile for user ${uid}`)
-    } catch (error) {
-      console.error(`❌ Failed to play video on mobile for user ${uid}:`, error)
-    }
+  // Check if we're on mobile by checking if mobile element has width > 0
+  if (mobilePlayerElement && mobilePlayerElement.offsetWidth > 0) {
+    targetElement = mobilePlayerElement
+    targetLabel = 'mobile'
+  } else if (desktopPlayerElement && desktopPlayerElement.offsetWidth > 0) {
+    targetElement = desktopPlayerElement
+    targetLabel = 'desktop'
   }
 
-  if (desktopPlayerElement) {
-    console.log(`📺 Playing video for user ${uid} on desktop`)
-    console.log(`   Element:`, desktopPlayerElement)
-    console.log(`   Element dimensions: ${desktopPlayerElement.offsetWidth}x${desktopPlayerElement.offsetHeight}`)
+  if (targetElement) {
+    console.log(`📺 Playing video for user ${uid} on ${targetLabel}`)
+    console.log(`   Element:`, targetElement)
+    console.log(`   Element dimensions: ${targetElement.offsetWidth}x${targetElement.offsetHeight}`)
     try {
-      videoTrack.play(desktopPlayerElement)
-      played = true
-      console.log(`✅ Video playing successfully on desktop for user ${uid}`)
+      videoTrack.play(targetElement)
+      playedVideos.add(uid)
+      console.log(`✅ Video playing successfully on ${targetLabel} for user ${uid}`)
     } catch (error) {
-      console.error(`❌ Failed to play video on desktop for user ${uid}:`, error)
+      console.error(`❌ Failed to play video on ${targetLabel} for user ${uid}:`, error)
     }
-  }
-
-  if (played) {
-    playedVideos.add(uid)
   } else {
-    console.error(`❌ No player element found for user ${uid} after ${maxAttempts} attempts`)
+    console.error(`❌ No visible player element found for user ${uid} after ${maxAttempts} attempts`)
   }
 })
 
@@ -1099,10 +1095,11 @@ function formatPrice(price) {
   position: relative !important;
 }
 
+[id^="remote-player-"] {
+  position: relative !important;
+}
+
 [id^="remote-player-"] video {
-  position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
