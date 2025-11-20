@@ -132,6 +132,106 @@
               </select>
             </div>
 
+            <!-- Capacity and Budget Section -->
+            <div class="border-t pt-4 mt-4">
+              <h3 class="text-lg font-semibold mb-4">Configuración de Capacidad y Presupuesto</h3>
+
+              <!-- Stream Provider -->
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  Proveedor de Streaming
+                </label>
+                <select v-model="form.streamProvider" class="input">
+                  <option value="AGORA">Agora.io</option>
+                  <option value="HUNDREDMS">100ms</option>
+                </select>
+                <p class="text-xs text-gray-500 mt-1">
+                  Proveedor de streaming de video en vivo
+                </p>
+              </div>
+
+              <!-- Budget and Currency -->
+              <div class="grid grid-cols-3 gap-4 mb-4">
+                <div class="col-span-2">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Presupuesto
+                  </label>
+                  <input
+                    v-model.number="form.budget"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    class="input"
+                    placeholder="0.00"
+                  />
+                  <p class="text-xs text-gray-500 mt-1">
+                    Presupuesto total para el evento
+                  </p>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Moneda
+                  </label>
+                  <select v-model="form.currency" class="input">
+                    <option value="USD">USD</option>
+                    <option value="PEN">PEN</option>
+                    <option value="EUR">EUR</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Viewer Capacity -->
+              <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Máximo de Viewers Concurrentes
+                  </label>
+                  <input
+                    v-model.number="form.maxConcurrentViewers"
+                    type="number"
+                    min="0"
+                    class="input"
+                    placeholder="1000"
+                  />
+                  <p class="text-xs text-gray-500 mt-1">
+                    Límite total de viewers en todo el evento
+                  </p>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Estimación de Pico de Viewers
+                  </label>
+                  <input
+                    v-model.number="form.estimatedPeakViewers"
+                    type="number"
+                    min="0"
+                    class="input"
+                    placeholder="500"
+                  />
+                  <p class="text-xs text-gray-500 mt-1">
+                    Para cálculo de costos estimados
+                  </p>
+                </div>
+              </div>
+
+              <!-- Max Booths -->
+              <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  Máximo de Booths
+                </label>
+                <input
+                  v-model.number="form.maxBooths"
+                  type="number"
+                  min="1"
+                  class="input"
+                  placeholder="10"
+                />
+                <p class="text-xs text-gray-500 mt-1">
+                  Número máximo de booths permitidos en el evento
+                </p>
+              </div>
+            </div>
+
             <!-- Error Message -->
             <div v-if="errorMessage" class="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
               {{ errorMessage }}
@@ -219,7 +319,13 @@ const form = ref({
   startDate: '',
   endDate: '',
   bannerUrl: '',
-  status: 'DRAFT'
+  status: 'DRAFT',
+  streamProvider: 'AGORA',
+  budget: null,
+  currency: 'USD',
+  maxConcurrentViewers: null,
+  estimatedPeakViewers: null,
+  maxBooths: null
 })
 
 onMounted(() => {
@@ -271,7 +377,13 @@ function editEvent(event) {
     startDate: new Date(event.startDate).toISOString().slice(0, 16),
     endDate: new Date(event.endDate).toISOString().slice(0, 16),
     bannerUrl: event.coverImage || '',
-    status: event.status
+    status: event.status,
+    streamProvider: event.streamProvider || 'AGORA',
+    budget: event.budget || null,
+    currency: event.currency || 'USD',
+    maxConcurrentViewers: event.maxConcurrentViewers || null,
+    estimatedPeakViewers: event.estimatedPeakViewers || null,
+    maxBooths: event.maxBooths || null
   }
   showEditModal.value = true
 }
@@ -308,12 +420,30 @@ async function handleSubmit() {
       description: form.value.description,
       startDate: new Date(form.value.startDate).toISOString(),
       endDate: new Date(form.value.endDate).toISOString(),
-      status: form.value.status
+      status: form.value.status,
+      streamProvider: form.value.streamProvider
     }
 
     // Solo agregar coverImage si tiene valor
     if (form.value.bannerUrl && form.value.bannerUrl.trim()) {
       data.coverImage = form.value.bannerUrl
+    }
+
+    // Agregar campos de capacidad y presupuesto si tienen valor
+    if (form.value.budget !== null && form.value.budget > 0) {
+      data.budget = parseFloat(form.value.budget)
+    }
+    if (form.value.currency) {
+      data.currency = form.value.currency
+    }
+    if (form.value.maxConcurrentViewers !== null && form.value.maxConcurrentViewers > 0) {
+      data.maxConcurrentViewers = parseInt(form.value.maxConcurrentViewers)
+    }
+    if (form.value.estimatedPeakViewers !== null && form.value.estimatedPeakViewers > 0) {
+      data.estimatedPeakViewers = parseInt(form.value.estimatedPeakViewers)
+    }
+    if (form.value.maxBooths !== null && form.value.maxBooths > 0) {
+      data.maxBooths = parseInt(form.value.maxBooths)
     }
 
     console.log('Enviando datos:', data) // Debug
@@ -363,7 +493,13 @@ function closeModal() {
     startDate: '',
     endDate: '',
     bannerUrl: '',
-    status: 'DRAFT'
+    status: 'DRAFT',
+    streamProvider: 'AGORA',
+    budget: null,
+    currency: 'USD',
+    maxConcurrentViewers: null,
+    estimatedPeakViewers: null,
+    maxBooths: null
   }
   errorMessage.value = ''
 }
