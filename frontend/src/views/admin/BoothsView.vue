@@ -118,6 +118,27 @@
               />
             </div>
 
+            <!-- Capacity Configuration -->
+            <div class="border-t pt-4 mt-4">
+              <h3 class="text-lg font-semibold mb-3">Configuración de Capacidad</h3>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                  Máximo de Viewers Concurrentes
+                </label>
+                <input
+                  v-model.number="form.maxConcurrentViewers"
+                  type="number"
+                  min="0"
+                  class="input"
+                  placeholder="100"
+                />
+                <p class="text-xs text-gray-500 mt-1">
+                  Límite de viewers concurrentes para este booth. Dejar en blanco para sin límite.
+                </p>
+              </div>
+            </div>
+
             <!-- Error Message -->
             <div v-if="errorMessage" class="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
               {{ errorMessage }}
@@ -203,7 +224,8 @@ const form = ref({
   description: '',
   eventId: '',
   exhibitorEmail: '',
-  bannerUrl: ''
+  bannerUrl: '',
+  maxConcurrentViewers: null
 })
 
 onMounted(async () => {
@@ -220,7 +242,8 @@ function editBooth(booth) {
     description: booth.description,
     eventId: booth.eventId,
     exhibitorEmail: booth.user?.email || '',
-    bannerUrl: booth.bannerUrl || ''
+    bannerUrl: booth.bannerUrl || '',
+    maxConcurrentViewers: booth.maxConcurrentViewers || null
   }
   showEditModal.value = true
 }
@@ -245,6 +268,11 @@ async function handleSubmit() {
     // Solo agregar bannerUrl si tiene valor
     if (form.value.bannerUrl && form.value.bannerUrl.trim()) {
       data.bannerUrl = form.value.bannerUrl
+    }
+
+    // Agregar maxConcurrentViewers si tiene valor
+    if (form.value.maxConcurrentViewers !== null && form.value.maxConcurrentViewers > 0) {
+      data.maxConcurrentViewers = parseInt(form.value.maxConcurrentViewers)
     }
 
     console.log('Enviando datos del booth:', data) // Debug
@@ -293,7 +321,8 @@ function closeModal() {
     description: '',
     eventId: '',
     exhibitorEmail: '',
-    bannerUrl: ''
+    bannerUrl: '',
+    maxConcurrentViewers: null
   }
   errorMessage.value = ''
 }
