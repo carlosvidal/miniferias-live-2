@@ -2,52 +2,33 @@
   <!-- Full Screen Live Shopping Experience -->
   <div class="relative flex h-screen w-full max-w-lg lg:max-w-none mx-auto flex-col lg:flex-row overflow-hidden bg-black">
 
-    <!-- Main Content Area with Video Player (Mobile Only) -->
-    <div class="absolute lg:hidden inset-0 h-full w-full z-0">
-      <!-- Loading State -->
-      <div v-if="loading" class="flex h-full items-center justify-center bg-gray-900">
-        <LoadingSpinner />
-      </div>
-
-      <!-- Media Player -->
-      <div v-else-if="booth" class="relative flex h-full w-full flex-col bg-black">
-        <!-- Video Container -->
-        <div
-          id="video-container"
-          class="relative flex h-full items-center justify-center bg-black bg-cover bg-center"
-          :style="!remoteUsers.length && booth.bannerUrl ? `background-image: url(${booth.bannerUrl})` : ''"
-        >
-          <!-- Remote Stream (Exhibitor) -->
-          <div v-if="remoteUsers.length > 0" class="w-full h-full">
-            <div
-              v-for="user in remoteUsers"
-              :key="user.uid"
-              :id="`remote-player-${user.uid}`"
-              class="w-full h-full"
-            ></div>
-          </div>
-
-          <!-- Placeholder when not streaming -->
-          <div v-else-if="!booth.isStreaming || !remoteUsers.length" class="absolute inset-0 flex items-center justify-center">
-            <div class="text-center text-white z-10">
-              <svg class="w-20 h-20 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-              <p class="text-lg font-medium opacity-80">{{ streamStatus }}</p>
-            </div>
-            <!-- Dark overlay for better text readability -->
-            <div class="absolute inset-0 bg-black/40"></div>
-          </div>
+    <!-- Video Background (Mobile Only - behind overlay) -->
+    <div v-if="booth" class="lg:hidden absolute inset-0 z-0">
+      <div
+        id="video-container-mobile"
+        class="relative w-full h-full flex items-center justify-center bg-black bg-cover bg-center"
+        :style="!remoteUsers.length && booth.bannerUrl ? `background-image: url(${booth.bannerUrl})` : ''"
+      >
+        <!-- Remote Stream (Exhibitor) -->
+        <div v-if="remoteUsers.length > 0" class="w-full h-full">
+          <div
+            v-for="user in remoteUsers"
+            :key="user.uid"
+            :id="`remote-player-${user.uid}`"
+            class="w-full h-full"
+          ></div>
         </div>
-      </div>
 
-      <!-- Error State -->
-      <div v-else-if="error" class="flex h-full items-center justify-center bg-gray-900 p-8">
-        <div class="text-center text-white">
-          <p class="text-lg">{{ error }}</p>
-          <button @click="$router.go(-1)" class="mt-4 px-6 py-2 bg-pink-600 rounded-full">
-            Volver
-          </button>
+        <!-- Placeholder when not streaming -->
+        <div v-else-if="!booth.isStreaming || !remoteUsers.length" class="absolute inset-0 flex items-center justify-center">
+          <div class="text-center text-white z-10">
+            <svg class="w-20 h-20 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            <p class="text-lg font-medium opacity-80">{{ streamStatus }}</p>
+          </div>
+          <!-- Dark overlay for better text readability -->
+          <div class="absolute inset-0 bg-black/40"></div>
         </div>
       </div>
     </div>
@@ -375,45 +356,43 @@
         </div>
       </div>
 
-      <!-- 3 Columns Container with Gap -->
-      <div class="flex flex-1 gap-6 p-6 overflow-hidden bg-gray-950">
+      <!-- Responsive Layout: Full screen on mobile, 3 columns on desktop -->
+      <div class="flex flex-1 flex-col lg:flex-row lg:gap-6 lg:p-6 overflow-hidden bg-black lg:bg-gray-950">
 
-        <!-- Video Column -->
-        <div class="flex items-center justify-center w-[33%] bg-black rounded-xl overflow-hidden">
-          <div class="aspect-[9/16] w-full max-h-full">
-            <!-- Video Container -->
-            <div
-              id="video-container-desktop"
-              class="relative flex h-full items-center justify-center bg-black bg-cover bg-center"
-              :style="!remoteUsers.length && booth.bannerUrl ? `background-image: url(${booth.bannerUrl})` : ''"
-            >
-              <!-- Remote Stream (Exhibitor) -->
-              <div v-if="remoteUsers.length > 0" class="w-full h-full">
-                <div
-                  v-for="user in remoteUsers"
-                  :key="`desktop-${user.uid}`"
-                  :id="`remote-player-desktop-${user.uid}`"
-                  class="w-full h-full"
-                ></div>
-              </div>
+        <!-- Video Column: Desktop only -->
+        <div class="w-[33%] h-full bg-black rounded-xl overflow-hidden relative">
+          <!-- Video Container -->
+          <div
+            id="video-container-desktop"
+            class="relative w-full h-full flex items-center justify-center bg-black bg-cover bg-center"
+            :style="!remoteUsers.length && booth.bannerUrl ? `background-image: url(${booth.bannerUrl})` : ''"
+          >
+            <!-- Remote Stream (Exhibitor) -->
+            <div v-if="remoteUsers.length > 0" class="w-full h-full">
+              <div
+                v-for="user in remoteUsers"
+                :key="`desktop-${user.uid}`"
+                :id="`remote-player-desktop-${user.uid}`"
+                class="w-full h-full"
+              ></div>
+            </div>
 
-              <!-- Placeholder when not streaming -->
-              <div v-else-if="!booth.isStreaming || !remoteUsers.length" class="absolute inset-0 flex items-center justify-center">
-                <div class="text-center text-white z-10">
-                  <svg class="w-20 h-20 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  <p class="text-lg font-medium opacity-80">{{ streamStatus }}</p>
-                </div>
-                <!-- Dark overlay for better text readability -->
-                <div class="absolute inset-0 bg-black/40"></div>
+            <!-- Placeholder when not streaming -->
+            <div v-else-if="!booth.isStreaming || !remoteUsers.length" class="absolute inset-0 flex items-center justify-center">
+              <div class="text-center text-white z-10">
+                <svg class="w-20 h-20 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <p class="text-lg font-medium opacity-80">{{ streamStatus }}</p>
               </div>
+              <!-- Dark overlay for better text readability -->
+              <div class="absolute inset-0 bg-black/40"></div>
             </div>
           </div>
         </div>
 
-        <!-- Chat Column -->
-        <div class="flex flex-col w-[33%] bg-gray-900 rounded-xl overflow-hidden">
+        <!-- Chat Column (hidden on mobile) -->
+        <div class="hidden lg:flex flex-col w-[33%] bg-gray-900 rounded-xl overflow-hidden">
           <!-- Header -->
           <div class="flex items-center justify-between p-4 border-b border-gray-800 bg-gray-800">
             <h3 class="text-white text-lg font-bold">Chat</h3>
@@ -460,8 +439,8 @@
           </div>
         </div>
 
-        <!-- Products Column -->
-        <div class="flex flex-col w-[34%] bg-gray-900 rounded-xl overflow-hidden">
+        <!-- Products Column (hidden on mobile) -->
+        <div class="hidden lg:flex flex-col w-[34%] bg-gray-900 rounded-xl overflow-hidden">
           <!-- Header -->
           <div class="flex items-center justify-between p-4 border-b border-gray-800 bg-gray-800">
             <h3 class="text-white text-lg font-bold">Productos</h3>
@@ -667,7 +646,7 @@ setOnVideoTrack(async (uid, videoTrack) => {
   console.log(`🎥 Video track ready for user ${uid}, waiting for DOM...`)
   streamStatus.value = 'Stream activo'
 
-  // Retry logic for finding DOM elements
+  // Retry logic for finding DOM elements (mobile and desktop)
   let mobilePlayerElement = null
   let desktopPlayerElement = null
   let attempts = 0
@@ -678,7 +657,7 @@ setOnVideoTrack(async (uid, videoTrack) => {
     await nextTick()
     await new Promise(resolve => setTimeout(resolve, 200))
 
-    // Try to find elements
+    // Try to find both mobile and desktop elements
     mobilePlayerElement = document.getElementById(`remote-player-${uid}`)
     desktopPlayerElement = document.getElementById(`remote-player-desktop-${uid}`)
 
@@ -688,32 +667,39 @@ setOnVideoTrack(async (uid, videoTrack) => {
     }
   }
 
-  // Determine which element is visible (check if mobile element is hidden by lg:hidden)
+  // CRITICAL: Agora can only play a video track in ONE element at a time
+  // Determine which element is visible and play ONLY in that one
   let targetElement = null
   let targetLabel = ''
 
-  // Check if we're on mobile by checking if mobile element has width > 0
+  // Check if mobile element is visible (has width > 0)
   if (mobilePlayerElement && mobilePlayerElement.offsetWidth > 0) {
     targetElement = mobilePlayerElement
     targetLabel = 'mobile'
+    console.log(`📱 Mobile element is visible (${mobilePlayerElement.offsetWidth}x${mobilePlayerElement.offsetHeight})`)
   } else if (desktopPlayerElement && desktopPlayerElement.offsetWidth > 0) {
     targetElement = desktopPlayerElement
     targetLabel = 'desktop'
+    console.log(`🖥️ Desktop element is visible (${desktopPlayerElement.offsetWidth}x${desktopPlayerElement.offsetHeight})`)
   }
 
   if (targetElement) {
-    console.log(`📺 Playing video for user ${uid} on ${targetLabel}`)
-    console.log(`   Element:`, targetElement)
-    console.log(`   Element dimensions: ${targetElement.offsetWidth}x${targetElement.offsetHeight}`)
+    console.log(`📺 Playing video for user ${uid} in ${targetLabel} element ONLY`)
     try {
       videoTrack.play(targetElement)
       playedVideos.add(uid)
-      console.log(`✅ Video playing successfully on ${targetLabel} for user ${uid}`)
+      console.log(`✅ Video playing successfully in ${targetLabel} for user ${uid}`)
     } catch (error) {
-      console.error(`❌ Failed to play video on ${targetLabel} for user ${uid}:`, error)
+      console.error(`❌ Failed to play video in ${targetLabel} for user ${uid}:`, error)
     }
   } else {
-    console.error(`❌ No visible player element found for user ${uid} after ${maxAttempts} attempts`)
+    console.error(`❌ No visible player element found for user ${uid}`)
+    if (mobilePlayerElement) {
+      console.log(`   Mobile element exists but hidden: ${mobilePlayerElement.offsetWidth}x${mobilePlayerElement.offsetHeight}`)
+    }
+    if (desktopPlayerElement) {
+      console.log(`   Desktop element exists but hidden: ${desktopPlayerElement.offsetWidth}x${desktopPlayerElement.offsetHeight}`)
+    }
   }
 })
 
@@ -1090,7 +1076,7 @@ function formatPrice(price) {
 }
 
 /* Force video elements to be visible and fill container */
-#video-container,
+#video-container-mobile,
 #video-container-desktop {
   position: relative !important;
 }
