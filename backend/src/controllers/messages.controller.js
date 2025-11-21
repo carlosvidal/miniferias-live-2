@@ -143,18 +143,27 @@ export async function deleteMessage(req, res) {
 export async function getBoothMessages(req, res) {
   try {
     const { boothId } = req.params;
-    const { page = 1, limit = 50 } = req.query;
+    const { page = 1, limit = 20 } = req.query;
+
+    // For privacy and freshness: only show messages from last 5 minutes
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
 
     const skip = (page - 1) * limit;
 
+    // Cap limit at 20 messages maximum
+    const maxLimit = Math.min(parseInt(limit), 20);
+
+    const where = {
+      boothId,
+      isDeleted: false,
+      createdAt: { gte: fiveMinutesAgo }
+    };
+
     const [messages, total] = await Promise.all([
       prisma.message.findMany({
-        where: {
-          boothId,
-          isDeleted: false
-        },
+        where,
         skip,
-        take: parseInt(limit),
+        take: maxLimit,
         orderBy: { createdAt: 'asc' },
         include: {
           user: {
@@ -167,10 +176,7 @@ export async function getBoothMessages(req, res) {
         }
       }),
       prisma.message.count({
-        where: {
-          boothId,
-          isDeleted: false
-        }
+        where
       })
     ]);
 
@@ -179,8 +185,8 @@ export async function getBoothMessages(req, res) {
       pagination: {
         total,
         page: parseInt(page),
-        limit: parseInt(limit),
-        totalPages: Math.ceil(total / limit)
+        limit: maxLimit,
+        totalPages: Math.ceil(total / maxLimit)
       }
     });
   } catch (error) {
