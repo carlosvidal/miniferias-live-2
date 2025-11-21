@@ -170,7 +170,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useEventsStore } from '@/stores/events'
 import AppHeader from '@/components/shared/AppHeader.vue'
@@ -188,6 +188,10 @@ const eventsStore = useEventsStore()
 const event = ref(null)
 const { getImageUrl } = useImageUpload()
 const { getCalendarOptions } = useCalendar()
+
+// Polling for live status updates
+let pollingInterval = null
+const POLLING_INTERVAL_MS = 10000 // 10 seconds
 
 // Notifications functionality
 const notifications = useNotifications()
@@ -398,13 +402,88 @@ function getCloudflareImageUrl(imageUrl, variant = 'public') {
   return imageUrl
 }
 
+// Update booth streaming status in real-time
+async function updateBoothStatus() {
+  if (!event.value) return
+
+  try {
+    // Fetch fresh event data (silently, without loading state)
+    const response = await eventsAPI.getBySlug(route.params.slug)
+    const freshEvent = response.data
+
+    // Only update booth streaming status to avoid re-rendering everything
+    if (freshEvent.booths && event.value.booths) {
+      event.value.booths.forEach((booth, index) => {
+        const freshBooth = freshEvent.booths.find(b => b.id === booth.id)
+        if (freshBooth) {
+          // Update only the isStreaming property
+          booth.isStreaming = freshBooth.isStreaming
+        }
+      })
+    }
+  } catch (error) {
+    // Silently fail - don't show errors for background polling
+    console.error('Error updating booth status:', error)
+  }
+}
+
+// Start polling for booth status updates
+function startPolling() {
+  // Clear any existing interval
+  if (pollingInterval) {
+    clearInterval(pollingInterval)
+  }
+
+  // Update immediately
+  updateBoothStatus()
+
+  // Set up periodic updates
+  pollingInterval = setInterval(() => {
+    // Only poll if the page is visible (save resources when tab is not active)
+    if (document.visibilityState === 'visible') {
+      updateBoothStatus()
+    }
+  }, POLLING_INTERVAL_MS)
+}
+
+// Stop polling
+function stopPolling() {
+  if (pollingInterval) {
+    clearInterval(pollingInterval)
+    pollingInterval = null
+  }
+}
+
+// Handle page visibility changes to pause/resume polling
+function handleVisibilityChange() {
+  if (document.visibilityState === 'visible') {
+    // Page became visible, update immediately
+    updateBoothStatus()
+  }
+  // When hidden, the setInterval will skip updates (checked in startPolling)
+}
+
 onMounted(async () => {
   event.value = await eventsStore.fetchEventBySlug(route.params.slug)
 
   // Verificar suscripción a notificaciones push
   if (event.value) {
     await checkPushSubscription()
+
+    // Start polling for booth status updates
+    startPolling()
+
+    // Listen for page visibility changes
+    document.addEventListener('visibilitychange', handleVisibilityChange)
   }
+})
+
+onUnmounted(() => {
+  // Clean up polling interval when component is unmounted
+  stopPolling()
+
+  // Remove visibility change listener
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
 })
 </script>
 
