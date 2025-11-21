@@ -13,7 +13,7 @@ export function useAgora() {
   const subscribedTracks = new Map() // Track subscriptions: uid -> {video: boolean, audio: boolean}
   const usersInChannel = new Set() // Track which users have actually joined the channel
 
-  // Handle user published event with safe subscription
+  // Handle user published event with safe subscription and retry logic
   async function handleUserPublished(user, mediaType) {
     try {
       // CRITICAL: Check if user has actually joined the channel first
@@ -36,10 +36,54 @@ export function useAgora() {
         return
       }
 
-      await client.value.subscribe(user, mediaType)
-      subscribedTracks.set(trackKey, true)
-      console.log(`✅ Subscribed to ${mediaType} from user ${user.uid}`)
+      // Implement retry logic with exponential backoff for race conditions
+      const maxRetries = 3
+      let retryCount = 0
+      let subscribed = false
+      let lastError = null
 
+      while (!subscribed && retryCount <= maxRetries) {
+        try {
+          // Verify user is in remoteUsers list (additional safety check)
+          const remoteUserExists = client.value.remoteUsers.find(u => u.uid === user.uid)
+          if (!remoteUserExists && retryCount < maxRetries) {
+            console.log(`🔄 User ${user.uid} not yet in remoteUsers, retry ${retryCount + 1}/${maxRetries}`)
+            await new Promise(resolve => setTimeout(resolve, 300 * Math.pow(2, retryCount)))
+            retryCount++
+            continue
+          }
+
+          if (!remoteUserExists) {
+            console.warn(`⚠️ User ${user.uid} not found in remoteUsers after ${maxRetries} retries`)
+            return
+          }
+
+          // Attempt subscription
+          await client.value.subscribe(user, mediaType)
+          subscribed = true
+          subscribedTracks.set(trackKey, true)
+          console.log(`✅ Subscribed to ${mediaType} from user ${user.uid}`)
+        } catch (error) {
+          lastError = error
+
+          // Check if it's the "user not in channel" error
+          if (error.code === 'INVALID_REMOTE_USER' && retryCount < maxRetries) {
+            const backoffMs = 300 * Math.pow(2, retryCount)
+            console.log(`🔄 Retry ${retryCount + 1}/${maxRetries} subscribing to ${mediaType} from user ${user.uid} in ${backoffMs}ms...`)
+            await new Promise(resolve => setTimeout(resolve, backoffMs))
+            retryCount++
+          } else {
+            // Different error or max retries reached
+            throw error
+          }
+        }
+      }
+
+      if (!subscribed) {
+        throw lastError || new Error('Failed to subscribe after retries')
+      }
+
+      // Successfully subscribed, now update our state
       if (mediaType === 'video') {
         const remoteUser = remoteUsers.value.find(u => u.uid === user.uid)
         if (remoteUser) {
@@ -74,7 +118,10 @@ export function useAgora() {
         console.log(`🔊 Playing audio for user ${user.uid}`)
       }
     } catch (error) {
-      console.error('❌ Failed to subscribe to user:', error)
+      console.error(`❌ Failed to subscribe to ${mediaType} from user ${user.uid} after retries:`, error)
+      // Clean up the subscription tracking if we failed
+      const trackKey = `${user.uid}-${mediaType}`
+      subscribedTracks.delete(trackKey)
     }
   }
 
@@ -122,6 +169,18 @@ export function useAgora() {
         subscribedTracks.delete(`${user.uid}-audio`)
         usersInChannel.delete(user.uid)
         remoteUsers.value = remoteUsers.value.filter(u => u.uid !== user.uid)
+      })
+
+      // Handle connection state changes (useful for debugging WebSocket issues)
+      client.value.on('connection-state-change', (curState, prevState, reason) => {
+        console.log(`🔄 Connection state changed: ${prevState} -> ${curState} (reason: ${reason || 'unknown'})`)
+
+        // If connection is lost and reconnecting, we might need to resubscribe
+        if (curState === 'RECONNECTING') {
+          console.log('⚠️ Connection is reconnecting, subscriptions may need to be re-established')
+        } else if (curState === 'CONNECTED' && prevState === 'RECONNECTING') {
+          console.log('✅ Connection restored, checking for remote users to resubscribe')
+        }
       })
     }
 
