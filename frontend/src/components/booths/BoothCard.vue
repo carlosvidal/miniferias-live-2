@@ -1,7 +1,11 @@
 <template>
-  <router-link
-    :to="`/booths/${booth.id}`"
-    class="block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 active:scale-[0.98]"
+  <component
+    :is="disabled ? 'div' : 'router-link'"
+    :to="disabled ? undefined : `/booths/${booth.id}`"
+    :class="[
+      'block bg-white rounded-2xl overflow-hidden shadow-sm transition-all duration-300',
+      disabled ? 'opacity-60 cursor-not-allowed grayscale' : 'hover:shadow-xl active:scale-[0.98]'
+    ]"
   >
     <!-- Cover Image -->
     <div class="relative">
@@ -57,7 +61,7 @@
         {{ booth.description }}
       </p>
     </div>
-  </router-link>
+  </component>
 </template>
 
 <script setup>
@@ -67,6 +71,10 @@ const props = defineProps({
   booth: {
     type: Object,
     required: true
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   }
 })
 
