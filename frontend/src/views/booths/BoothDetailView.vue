@@ -399,7 +399,7 @@
           </div>
 
           <!-- Messages -->
-          <div class="flex-1 overflow-y-auto p-4 space-y-3">
+          <div ref="chatContainerDesktop" class="flex-1 overflow-y-auto p-4 space-y-3">
             <div
               v-for="message in messages"
               :key="message.id"
@@ -600,6 +600,9 @@ const isBoothMember = ref(false)
 const showUserMenu = ref(false)
 const userMenuRef = ref(null)
 
+// Chat auto-scroll for desktop
+const chatContainerDesktop = ref(null)
+
 function toggleUserMenu() {
   showUserMenu.value = !showUserMenu.value
 }
@@ -713,6 +716,14 @@ let messagePollingInterval = null
 const recentMessages = computed(() => {
   return messages.value.slice(-5)
 })
+
+// Auto-scroll to bottom when new messages arrive (desktop chat)
+watch(messages, async () => {
+  await nextTick()
+  if (chatContainerDesktop.value) {
+    chatContainerDesktop.value.scrollTop = chatContainerDesktop.value.scrollHeight
+  }
+}, { deep: true })
 
 // Product modal
 const selectedProduct = ref(null)
