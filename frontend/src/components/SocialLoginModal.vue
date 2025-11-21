@@ -142,6 +142,10 @@ function close() {
 }
 
 function handleSocialLogin(provider) {
+  // Store current path for redirect after login
+  const currentPath = window.location.pathname + window.location.search
+  sessionStorage.setItem('auth_redirect_url', currentPath)
+
   // Get the backend base URL (without /api)
   let backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 

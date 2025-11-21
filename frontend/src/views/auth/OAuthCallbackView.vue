@@ -30,15 +30,20 @@ onMounted(async () => {
       return
     }
 
-    // Store the token
-    localStorage.setItem('token', token)
+    // Store the token using the auth store method (updates reactive state)
+    authStore.setToken(token)
 
-    // Fetch user data
+    // Fetch user data (now token.value is set, so fetchUser will work)
     await authStore.fetchUser()
 
-    // Redirect based on user role
-    let redirect = route.query.redirect || '/'
+    // Get redirect URL from sessionStorage (saved before OAuth flow)
+    const savedRedirect = sessionStorage.getItem('auth_redirect_url')
+    sessionStorage.removeItem('auth_redirect_url') // Clean up
 
+    // Determine redirect based on user role or saved URL
+    let redirect = savedRedirect || route.query.redirect || '/'
+
+    // Override redirect for admin and exhibitor roles
     if (authStore.isExhibitor) {
       redirect = '/exhibitor'
     } else if (authStore.isAdmin) {
