@@ -74,7 +74,6 @@
                     <button
                       @click="decrementQuantity(item)"
                       class="flex items-center justify-center size-7 rounded-md border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                      :disabled="item.quantity <= 1"
                     >
                       <svg v-if="item.quantity > 1" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />

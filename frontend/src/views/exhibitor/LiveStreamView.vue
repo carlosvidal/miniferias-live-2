@@ -384,7 +384,7 @@
           </div>
 
           <!-- Messages -->
-          <div class="flex-1 overflow-y-auto p-4 space-y-3">
+          <div ref="chatContainerDesktop" class="flex-1 overflow-y-auto p-4 space-y-3">
             <div v-if="messages.length === 0" class="text-center text-gray-500 mt-8">
               <p>No hay mensajes aún</p>
             </div>
@@ -479,7 +479,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { useBoothsStore } from '@/stores/booths'
 import { useAgora } from '@/composables/useAgora'
 import { subscribeToBoothMessages, unsubscribeFromChannel } from '@/services/supabase'
@@ -526,10 +526,21 @@ const products = ref([])
 let realtimeChannel = null
 let messagePollingInterval = null
 
+// Chat auto-scroll for desktop
+const chatContainerDesktop = ref(null)
+
 // Only show last 5 messages as overlay
 const recentMessages = computed(() => {
   return messages.value.slice(-5)
 })
+
+// Auto-scroll to bottom when new messages arrive (desktop chat)
+watch(messages, async () => {
+  await nextTick()
+  if (chatContainerDesktop.value) {
+    chatContainerDesktop.value.scrollTop = chatContainerDesktop.value.scrollHeight
+  }
+}, { deep: true })
 
 onMounted(async () => {
   try {
