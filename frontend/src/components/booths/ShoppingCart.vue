@@ -73,14 +73,11 @@
                   <div class="flex items-center gap-2">
                     <button
                       @click="decrementQuantity(item)"
-                      class="flex items-center justify-center size-7 rounded-md border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      class="flex items-center justify-center size-7 rounded-md border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       :disabled="item.quantity <= 1"
                     >
-                      <svg v-if="item.quantity > 1" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
-                      </svg>
-                      <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
                     <span class="w-6 text-center font-semibold">{{ item.quantity }}</span>
@@ -93,6 +90,17 @@
                       </svg>
                     </button>
                   </div>
+
+                  <!-- Delete Button -->
+                  <button
+                    @click="removeProduct(item)"
+                    class="flex items-center justify-center size-8 rounded-md text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    :title="`Eliminar ${item.name}`"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
                 </div>
               </div>
 
@@ -155,11 +163,12 @@ function incrementQuantity(item) {
 function decrementQuantity(item) {
   if (item.quantity > 1) {
     cartStore.updateQuantity(item.id, item.quantity - 1)
-  } else {
-    // Remove item if quantity would be 0
-    if (confirm(`¿Eliminar ${item.name} del carrito?`)) {
-      cartStore.removeItem(item.id)
-    }
+  }
+}
+
+function removeProduct(item) {
+  if (confirm(`¿Eliminar ${item.name} del carrito?`)) {
+    cartStore.removeItem(item.id)
   }
 }
 
