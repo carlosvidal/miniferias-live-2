@@ -92,8 +92,58 @@
             </button>
           </div>
 
-          <!-- Notifications and Reminders Card -->
-          <div class="space-y-4 rounded-xl bg-white/5 backdrop-blur-sm p-4 md:p-6 shadow-lg">
+          <!-- Countdown Timer -->
+          <div v-if="eventStatus === 'upcoming'" class="countdown-container rounded-xl bg-gradient-to-r from-indigo-900/80 via-purple-900/80 to-pink-900/80 backdrop-blur-sm p-6 shadow-lg">
+            <h3 class="text-center text-gray-300 text-sm font-medium mb-4 uppercase tracking-wider">El evento comienza en</h3>
+            <div class="countdown-timer">
+              <div class="countdown-item">
+                <span class="countdown-value">{{ countdown.days }}</span>
+                <span class="countdown-label">Días</span>
+              </div>
+              <div class="countdown-item">
+                <span class="countdown-value">{{ countdown.hours }}</span>
+                <span class="countdown-label">Horas</span>
+              </div>
+              <div class="countdown-item">
+                <span class="countdown-value">{{ countdown.minutes }}</span>
+                <span class="countdown-label">Minutos</span>
+              </div>
+              <div class="countdown-item">
+                <span class="countdown-value">{{ countdown.seconds }}</span>
+                <span class="countdown-label">Segundos</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Event Live Banner -->
+          <div v-else-if="eventStatus === 'live'" class="rounded-xl bg-gradient-to-r from-red-600/90 to-pink-600/90 backdrop-blur-sm p-6 shadow-lg text-center">
+            <div class="flex items-center justify-center gap-3 mb-2">
+              <span class="w-3 h-3 bg-white rounded-full animate-pulse"></span>
+              <h3 class="text-2xl font-bold text-white">EN VIVO AHORA</h3>
+              <span class="w-3 h-3 bg-white rounded-full animate-pulse"></span>
+            </div>
+            <p class="text-white/90">El evento está en curso. ¡Explora los booths participantes!</p>
+          </div>
+
+          <!-- Event Ended Message -->
+          <div v-else-if="eventStatus === 'ended'" class="rounded-xl bg-gradient-to-r from-gray-700/90 to-gray-800/90 backdrop-blur-sm p-6 shadow-lg text-center">
+            <div class="mb-4">
+              <svg class="w-16 h-16 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-white mb-2">Este evento ha finalizado</h3>
+            <p class="text-gray-300 mb-6">Gracias por tu interés. El evento ya no está disponible.</p>
+            <router-link to="/" class="inline-flex items-center gap-2 px-6 py-3 bg-pink-500 text-white font-bold rounded-full hover:bg-pink-600 transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              Ver otros eventos
+            </router-link>
+          </div>
+
+          <!-- Notifications and Reminders Card (hidden when event has ended) -->
+          <div v-if="eventStatus !== 'ended'" class="space-y-4 rounded-xl bg-white/5 backdrop-blur-sm p-4 md:p-6 shadow-lg">
             <h2 class="text-lg md:text-xl font-bold text-white">¡No te lo pierdas!</h2>
 
             <!-- Email Reminder -->
@@ -158,7 +208,7 @@
 
             <!-- Booths Grid -->
             <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              <BoothCard v-for="booth in event.booths" :key="booth.id" :booth="booth" />
+              <BoothCard v-for="booth in event.booths" :key="booth.id" :booth="booth" :disabled="eventStatus === 'ended'" />
             </div>
           </div>
         </div>
@@ -192,6 +242,16 @@ const { getCalendarOptions } = useCalendar()
 // Polling for live status updates
 let pollingInterval = null
 const POLLING_INTERVAL_MS = 10000 // 10 seconds
+
+// Countdown timer
+let countdownInterval = null
+const countdown = ref({
+  days: 0,
+  hours: 0,
+  minutes: 0,
+  seconds: 0
+})
+const eventStatus = ref('upcoming') // 'upcoming', 'live', 'ended'
 
 // Notifications functionality
 const notifications = useNotifications()
@@ -463,12 +523,75 @@ function handleVisibilityChange() {
   // When hidden, the setInterval will skip updates (checked in startPolling)
 }
 
+// Countdown timer functions
+function updateCountdown() {
+  if (!event.value) return
+
+  const now = new Date()
+  const startDate = new Date(event.value.startDate)
+  const endDate = event.value.endDate ? new Date(event.value.endDate) : null
+
+  // Check if event has ended
+  if (endDate && now >= endDate) {
+    eventStatus.value = 'ended'
+    countdown.value = { days: 0, hours: 0, minutes: 0, seconds: 0 }
+    stopCountdown()
+    return
+  }
+
+  // Check if event is live (started but not ended)
+  if (now >= startDate) {
+    eventStatus.value = 'live'
+    countdown.value = { days: 0, hours: 0, minutes: 0, seconds: 0 }
+    return
+  }
+
+  // Event is upcoming - calculate countdown
+  eventStatus.value = 'upcoming'
+  const diff = startDate - now
+
+  if (diff <= 0) {
+    countdown.value = { days: 0, hours: 0, minutes: 0, seconds: 0 }
+    eventStatus.value = 'live'
+    return
+  }
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24)
+  const minutes = Math.floor((diff / (1000 * 60)) % 60)
+  const seconds = Math.floor((diff / 1000) % 60)
+
+  countdown.value = { days, hours, minutes, seconds }
+}
+
+function startCountdown() {
+  if (countdownInterval) {
+    clearInterval(countdownInterval)
+  }
+
+  // Update immediately
+  updateCountdown()
+
+  // Update every second
+  countdownInterval = setInterval(updateCountdown, 1000)
+}
+
+function stopCountdown() {
+  if (countdownInterval) {
+    clearInterval(countdownInterval)
+    countdownInterval = null
+  }
+}
+
 onMounted(async () => {
   event.value = await eventsStore.fetchEventBySlug(route.params.slug)
 
   // Verificar suscripción a notificaciones push
   if (event.value) {
     await checkPushSubscription()
+
+    // Start countdown timer
+    startCountdown()
 
     // Start polling for booth status updates
     startPolling()
@@ -479,6 +602,9 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  // Clean up countdown interval
+  stopCountdown()
+
   // Clean up polling interval when component is unmounted
   stopPolling()
 
@@ -491,5 +617,56 @@ onUnmounted(() => {
 /* Custom styles for the toggle switch animation */
 .peer:checked~div {
   background-color: #ec4899;
+}
+
+/* Countdown Timer Styles */
+.countdown-timer {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.countdown-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 70px;
+  padding: 0.75rem;
+}
+
+.countdown-value {
+  font-size: 2.5rem;
+  font-weight: 300;
+  color: white;
+  text-shadow: 0 0 20px rgba(72, 200, 255, 0.5);
+  line-height: 1;
+}
+
+.countdown-label {
+  color: #B1CDF1;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  margin-top: 0.5rem;
+  letter-spacing: 0.05em;
+}
+
+@media (min-width: 640px) {
+  .countdown-timer {
+    gap: 1rem;
+  }
+
+  .countdown-item {
+    min-width: 90px;
+    padding: 1rem;
+  }
+
+  .countdown-value {
+    font-size: 3.5rem;
+  }
+
+  .countdown-label {
+    font-size: 0.875rem;
+  }
 }
 </style>
